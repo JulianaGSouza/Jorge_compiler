@@ -1,0 +1,15 @@
+/* erro : tipos incompatíveis
+
+   Imprima algo do tipo:
+
+   Erro (linha: 12; coluna: 15): tipos incompatívies; int e string 
+
+*/
+
+let 
+	type rectype = {name:string , id:int}
+	var rec1 := rectype {name="aname", id=0}
+	var a : int := rec1.id
+in
+        3
+end
