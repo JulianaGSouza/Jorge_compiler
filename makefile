@@ -2,7 +2,7 @@
 # Fevereiro de 2016
 # Desenvolvido por Gustavo Luiz Fernandes e Juliana Gonçalves de Souza
 TEST = lexico01.erro.tig
-TESTFOLDER = ../Tiger_testes
+TESTFOLDER = Testes
 
 all: lexico sintatico main
 
