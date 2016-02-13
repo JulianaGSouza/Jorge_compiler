@@ -11,20 +11,23 @@ public:
 };
 
 class T_int : public T_exp {
-	int n;
 public:
+	int n;
+
 	T_int(int n) : n(n){}
 };
 
 class T_float : public T_exp {
-	float n;
 public:
+	float n;
+
 	T_float(float n) : n(n){}
 };
 
 class T_string : public T_exp {
-	std::string cadeia;
 public:
+	std::string cadeia;
+
 	 T_string (const std::string &cadeia) : cadeia(cadeia) {}
 };
 
@@ -35,13 +38,13 @@ public:
 
 class T_dec {
 public:
-	~T_dec() {}
+	virtual ~T_dec() {}
 };
 
 class T_declist {
-private:
-	std::vector<std::shared_ptr<T_dec>> declist;
 public:
+	std::vector<std::shared_ptr<T_dec>> declist;
+
 	void add(std::shared_ptr<T_dec> dec){
 		declist.push_back(std::move(dec));
 	}
@@ -49,20 +52,21 @@ public:
 
 class T_ty {
 public:
-	~T_ty() {}
+	virtual ~T_ty() {}
 };
 
 class T_tydec : public T_dec {
+public:
 	std::string id;
 	std::shared_ptr<T_ty> ty;
-public:
+
 	T_tydec(const std::string &id, std::shared_ptr<T_ty> ty) : id(id), ty(std::move(ty)) {}
 };
 
 class T_tyfields{
-private:
-	std::vector<std::string> tyfields;
 public:
+	std::vector<std::string> tyfields;
+
 	void add(std::string id1, std::string id2){
 		tyfields.push_back(id1);
 		tyfields.push_back(id2);
@@ -70,36 +74,40 @@ public:
 };
 
 class T_ty_id : public T_ty{
-	std::string id;
 public:
+	std::string id;
+
 	T_ty_id(std::string id) : id(id) {}
 };
 
 class T_ty_rec : public T_ty {
-	std::shared_ptr<T_tyfields> tyfields;
 public:
+	std::shared_ptr<T_tyfields> tyfields;
+
 	T_ty_rec(std::shared_ptr<T_tyfields> tyfields) : tyfields(std::move(tyfields)) {}
 };
 
 class T_ty_array : public T_ty{
-	std::string id;
 public:
+	std::string id;
+
 	T_ty_array(const std::string &id) : id(id){}
 };
 
 class T_tylist {
-private:
-	std::vector<std::shared_ptr<T_ty>> tylist;
 public:
+	std::vector<std::shared_ptr<T_ty>> tylist;
+
 	void add(std::shared_ptr<T_ty> ty){
 		tylist.push_back(std::move(ty));
 	}
 };
 
 class T_ty_funfun : public T_ty {
+public:
 	std::shared_ptr<T_ty> ty1,ty2;
 	std::shared_ptr<T_tylist> tylist;
-public:
+
 	T_ty_funfun(std::shared_ptr<T_ty> ty1,std::shared_ptr<T_ty> t2)
 	: ty1(std::move(ty1)), ty2(std::move(ty2)) {}
 
@@ -108,9 +116,10 @@ public:
 };
 
 class T_vardec : public T_dec {
+public:
 	std::string id1,id2;
 	std::shared_ptr<T_exp> exp;
-public:
+
 	T_vardec(const std::string &id1, const std::string &id2, std::shared_ptr<T_exp> exp) 
 	: id1(id1), id2(id2), exp(std::move(exp)) {}
 
@@ -119,10 +128,11 @@ public:
 };
 
 class T_fundec : public T_dec {
+public:
 	std::string id1, id2;
 	std::shared_ptr<T_tyfields> tyfields;
 	std::shared_ptr<T_exp> exp;
-public:
+
 	T_fundec(const std::string &id1, std::shared_ptr<T_tyfields> tyfields, const std::string &id2, std::shared_ptr<T_exp> exp)
 	: id1(id1), tyfields(std::move(tyfields)), id2(id2), exp(std::move(exp)) {}
 
@@ -131,10 +141,11 @@ public:
 };
 
 class T_lvalue : public T_exp {
+public:
 	std::shared_ptr<T_lvalue> lvalue;
 	std::string id;
 	std::shared_ptr<T_exp> exp;
-public:
+
 	T_lvalue(const std::string &id) : id(id){}
 
 	T_lvalue(std::shared_ptr<T_lvalue> lvalue, const std::string &id)
@@ -145,27 +156,29 @@ public:
 };
 
 class T_operacao : public T_exp {
+public:
 	std::string op;
  	std::shared_ptr<T_exp> eexp,dexp;
-public:
+
 	T_operacao(const std::string op, std::shared_ptr<T_exp> expe, std::shared_ptr<T_exp> expd)
 	: op(op), eexp(std::move(expe)), dexp(std::move(dexp)) {}
 };
 
 class T_exp_list{
-private:
-	std::vector<std::shared_ptr<T_exp>> exp_list;
 public:
+	std::vector<std::shared_ptr<T_exp>> exp_list;
+
 	void add(std::shared_ptr<T_exp> exp){
 		exp_list.push_back(std::move(exp));
 	}
 };
 
 class T_chamada : public T_exp {
+public:
 	std::string id;
 	std::shared_ptr<T_exp_list> exp_list;
 	std::shared_ptr<T_exp> exp;
-public:
+
 	T_chamada(const std::string &id, std::shared_ptr<T_exp_list> exp_list)
 	: id(id), exp_list(std::move(exp_list)) {}
 
@@ -174,71 +187,78 @@ public:
 };
 
 class T_exp_seq : public T_exp { 
-private:
-	std::vector<std::shared_ptr<T_exp>> exp_seq;
 public:
+	std::vector<std::shared_ptr<T_exp>> exp_seq;
+
 	void add(std::shared_ptr<T_exp> exp){
 		exp_seq.push_back(std::move(exp));
 	}
 };
 
 class T_enum_it {	
+public:
 	std::string id;
 	std::shared_ptr<T_exp> exp;
-public:
+
 	T_enum_it(const std::string &id, std::shared_ptr<T_exp> exp) 
 	: id(id), exp(std::move(exp)) {}
 };
 
 class T_rec_enum {	
-private:
-	std::vector<std::shared_ptr<T_enum_it>> rec_enum;
 public:
+	std::vector<std::shared_ptr<T_enum_it>> rec_enum;
+
 	void add(std::shared_ptr<T_enum_it> enum_it){
 		rec_enum.push_back(std::move(enum_it));
 	}
 };
 
 class T_def_rec : public T_exp{
+public:
 	std::string tipo;
 	std::shared_ptr<T_rec_enum> rec_enum;
-public:
+
 	T_def_rec(const std::string &id, std::shared_ptr<T_rec_enum> rec_enum)
 	: tipo(id), rec_enum(std::move(rec_enum)) {}
 };
 
 class T_def_array : public T_exp{
+public:
 	std::string tipo;
 	std::shared_ptr<T_exp> exp1,exp2;
-public:
+
 	T_def_array(const std::string &id,std::shared_ptr<T_exp> exp1,std::shared_ptr<T_exp> exp2)
 	: tipo(id), exp1(std::move(exp1)),exp2(std::move(exp2)) {}
 };
 
 class T_subunario : public T_exp {
-	std::shared_ptr<T_exp> exp;
 public:
+	std::shared_ptr<T_exp> exp;
+
 	T_subunario(std::shared_ptr<T_exp> exp) : exp(std::move(exp)) {}
 };
 
 class T_if : public T_exp {
-	std::shared_ptr<T_exp> exp1,exp2;
 public:
+	std::shared_ptr<T_exp> exp1,exp2;
+
 	T_if(std::shared_ptr<T_exp> exp1, std::shared_ptr<T_exp> exp2) 
 	: exp1(std::move(exp1)),exp2(std::move(exp2)) {}
 };
 
 class T_if_else : public T_exp {
-	std::shared_ptr<T_exp> exp1,exp2,exp3;
 public:
+	std::shared_ptr<T_exp> exp1,exp2,exp3;
+
 	T_if_else(std::shared_ptr<T_exp> exp1, std::shared_ptr<T_exp> exp2,std::shared_ptr<T_exp> exp3) 
 	: exp1(std::move(exp1)),exp2(std::move(exp2)),exp3(std::move(exp3)) {}
 };
 
 class T_let : public T_exp {
+public:
 	std::shared_ptr<T_declist> declist;
 	std::shared_ptr<T_exp_seq> exp_seq;
-public:
+
 	T_let(std::shared_ptr<T_declist> declist, std::shared_ptr<T_exp_seq> exp_seq) 
 	: declist(std::move(declist)), exp_seq(std::move(exp_seq)) {}
 };
