@@ -1,5 +1,5 @@
 %defines 
-%error-verbose 
+%error-verbose
 
 %{
 
@@ -8,9 +8,15 @@
 
 extern char bf_linha_scanner[500];
 extern unsigned yycolumn;
+extern int yyline;
 
 void yyerror (std::shared_ptr<T_exp> raiz,char const *s){
-	std::cerr <<"\033[1;31m"  << "Erro sintatico (coluna " << yycolumn << "\033[1;0m" << ")" << std::endl;
+	std::cerr << "\033[1;37m"  << yyline << ":" << yycolumn << ":\033[1;31m error:" 
+            << "\033[1;0m "<< s << " at:" << std::endl;
+  std::cerr << bf_linha_scanner << std::endl;
+  for (int i = 0; i < yycolumn; i++) 
+    std::cerr << " ";
+  std::cerr << "\033[1;31m^\033[1;0m" << std::endl;
 };
 
 int yylex();
@@ -235,6 +241,7 @@ exp:		lvalue
 		| exp_if_else 
 		| exp_if	
 		| exp_let
+    | error { $$ = new T_nil(); }
 ;
 
 %%

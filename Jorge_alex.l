@@ -8,25 +8,32 @@ typedef union{char* i_id; T_exp* i_exp; T_int* i_int; T_float* i_float; T_string
 
 char bf_linha_scanner[500];
 unsigned yycolumn = 0;
+unsigned yyline = 1;
 
 #define YY_USER_ACTION yycolumn += yyleng;
-
-void yyerror(const char *s){
-       printf ("%s\n", s);
-};
 
 %}
 
 %option noyywrap
 
-digito [0-9]
-inteiro {digito}+
 float {inteiro}("."{inteiro})
-string_s "\""[a-zA-Z0-9_]+"\""
-id [a-zA-Z][a-zA-Z0-9_]*  
-comentario "/*"[a-zA-Z0-9_]*"*/"
+
+%x comment
 
 %%
+[\t] {yycolumn += 4;}
+[ ]+ {yycolumn += 1;}
+[\n].* {
+	      strncpy(bf_linha_scanner, yytext+1, sizeof(bf_linha_scanner));
+        yyline++;
+	      yycolumn = 0;
+        yyless(1);}
+
+"\/\*" { BEGIN(comment); }
+
+<comment>[^\*\/|\n]*
+
+<comment>"\*\/" {  BEGIN(INITIAL); }
 
 "type" {return TYPE;}
 "array" {return ARRAY;}
@@ -41,12 +48,8 @@ comentario "/*"[a-zA-Z0-9_]*"*/"
 "then" {return THEN;}
 "else" {return ELSE;}
 
-"{" {return '{';}
-"}" {return '}';}
-"(" {return '(';}
-")" {return ')';}
-"[" {return '[';}
-"]" {return ']';}
+"["|"]"|"{"|"}"|"("|")" { return yytext[0]; }
+
 "=" {return IGUAL;}
 "<>" {return DIFERENTE;}
 ">" {return MAIOR;}
@@ -66,7 +69,7 @@ comentario "/*"[a-zA-Z0-9_]*"*/"
 "/" {return DIVISAO;}
 "->" {return RETORNA;}
 
-inteiro {
+[0-9]+ {
 	return INT;
 }
 
@@ -74,22 +77,16 @@ float {
 	return FLOAT;
 }
 
-id {
+[a-zA-Z][a-zA-Z_0-9]* {
+  yylval.i_id = yytext;
 	return ID;
 }
 
-string {
+\"[^\"]*\" {
 	return STRING; 
 }
 
-comentario {yycolumn += sizeof(yytext);}
+. { printf("Not expecting: [%c]\n", yytext[0]); exit(1); }
 
-[\t] {yycolumn += 3;}
-[ ]+ {yycolumn += 1;}
-[\n].* {
-	strncpy(bf_linha_scanner, yytext+1, sizeof(bf_linha_scanner));
-        yylineno++;
-	yycolumn = 0;
-        yyless(1);}
-
+<<EOF>> { yyterminate(); }
 %%
