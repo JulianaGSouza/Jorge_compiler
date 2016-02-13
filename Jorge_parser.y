@@ -189,7 +189,7 @@ exp_list:	%empty				{$$ = new T_exp_list();}
 ;
 
 chamada:	ID '(' exp_list ')'		{$$ = new T_chamada(std::string($1),std::shared_ptr<T_exp_list>($3));}
-		| exp '(' exp_list ')'		{$$ = new T_chamada(std::shared_ptr<T_exp>($1),std::shared_ptr<T_exp_list>($3));}
+	//	| exp '(' exp_list ')'		{$$ = new T_chamada(std::shared_ptr<T_exp>($1),std::shared_ptr<T_exp_list>($3));}
 ;
 
 exp_seq: 	%empty 				{$$ = new T_exp_seq();}

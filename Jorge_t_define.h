@@ -117,14 +117,14 @@ public:
 
 class T_vardec : public T_dec {
 public:
-	std::string id1,id2;
+	std::string nome, tipo;
 	std::shared_ptr<T_exp> exp;
 
-	T_vardec(const std::string &id1, const std::string &id2, std::shared_ptr<T_exp> exp) 
-	: id1(id1), id2(id2), exp(std::move(exp)) {}
+	T_vardec(const std::string &nome, const std::string &tipo, std::shared_ptr<T_exp> exp) 
+	: nome(nome), tipo(tipo), exp(std::move(exp)) {}
 
-	T_vardec(const std::string &id, std::shared_ptr<T_exp> exp) 
-	: id1(id), exp(std::move(exp)) {}
+	T_vardec(const std::string &nome, std::shared_ptr<T_exp> exp) 
+	: nome(nome), exp(std::move(exp)) {}
 };
 
 class T_fundec : public T_dec {
@@ -177,13 +177,13 @@ class T_chamada : public T_exp {
 public:
 	std::string id;
 	std::shared_ptr<T_exp_list> exp_list;
-	std::shared_ptr<T_exp> exp;
+	//std::shared_ptr<T_exp> exp;
 
 	T_chamada(const std::string &id, std::shared_ptr<T_exp_list> exp_list)
 	: id(id), exp_list(std::move(exp_list)) {}
 
-	T_chamada(std::shared_ptr<T_exp> exp, std::shared_ptr<T_exp_list> exp_list)
-	: exp(std::move(exp)), id(id), exp_list(std::move(exp_list)) {}
+	/*T_chamada(std::shared_ptr<T_exp> exp, std::shared_ptr<T_exp_list> exp_list)
+	: exp(std::move(exp)), id(id), exp_list(std::move(exp_list)) {}*/
 };
 
 class T_exp_seq : public T_exp { 
