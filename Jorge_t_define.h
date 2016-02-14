@@ -190,11 +190,11 @@ public:
 class T_chamada : public T_exp {
 public:
 	std::string id;
-	std::shared_ptr<T_exp_list> exp_list;
+	std::shared_ptr<T_exp_list> parametros;
 	//std::shared_ptr<T_exp> exp;
 
 	T_chamada(const std::string &id, std::shared_ptr<T_exp_list> exp_list)
-	: id(id), exp_list(std::move(exp_list)) {}
+	: id(id), parametros(std::move(exp_list)) {}
 
 	/*T_chamada(std::shared_ptr<T_exp> exp, std::shared_ptr<T_exp_list> exp_list)
 	: exp(std::move(exp)), id(id), exp_list(std::move(exp_list)) {}*/
