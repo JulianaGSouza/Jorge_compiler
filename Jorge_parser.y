@@ -10,13 +10,10 @@ extern char bf_linha_scanner[500];
 extern unsigned yycolumn;
 extern int yyline;
 
+#include "utils.h"
+
 void yyerror (std::shared_ptr<T_exp> raiz,char const *s){
-	std::cerr << "\033[1;37m"  << yyline << ":" << yycolumn << ":\033[1;31m error:" 
-            << "\033[1;0m "<< s << " at:" << std::endl;
-  std::cerr << bf_linha_scanner << std::endl;
-  for (int i = 0; i < yycolumn; i++) 
-    std::cerr << " ";
-  std::cerr << "\033[1;31m^\033[1;0m" << std::endl;
+	imprime_erro(s);
 };
 
 int yylex();
@@ -99,10 +96,12 @@ int yylex();
 
 %%
 
-inicio :	exp 			{raiz = std::shared_ptr<T_exp>(new T_exp());}
+inicio :	exp 			{raiz = std::shared_ptr<T_exp>(new T_exp()); 
+					raiz->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 
 //declaracoes
-declist:	dec			{ $$ = new T_declist(); $$->add(std::shared_ptr<T_dec>($1));}
+declist:	dec			{ $$ = new T_declist(); $$->add(std::shared_ptr<T_dec>($1));
+						$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		|dec declist		{ $2->add(std::shared_ptr<T_dec>($1)); $$ = $2;}
 ;
 
@@ -112,10 +111,13 @@ dec:		tydec
 ;
 
 //tipos
-tydec: 		TYPE ID IGUAL ty 	{ $$ = new T_tydec(std::string($2),std::shared_ptr<T_ty>($4));};
+tydec: 		TYPE ID IGUAL ty 	{ $$ = new T_tydec(std::string($2),std::shared_ptr<T_ty>($4));
+						$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);};
 
-tylist:		%empty			{ $$ = new T_tylist();}
-		|ty			{ $$ = new T_tylist(); $$->add(std::shared_ptr<T_ty>($1));}
+tylist:		%empty			{ $$ = new T_tylist();
+						$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		|ty			{ $$ = new T_tylist(); $$->add(std::shared_ptr<T_ty>($1));
+						$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		|ty ',' tylist		{ $3->add(std::shared_ptr<T_ty>($1)); $$ = $3;}
 ;
 
@@ -125,112 +127,152 @@ ty:		ty_id
 		| ty_funfun
 ;
 
-ty_id:		ID				{ $$ = new T_ty_id(std::string($1));}
+ty_id:		ID				{ $$ = new T_ty_id(std::string($1));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-ty_rec:		'{' tyfields '}' 		{ $$ = new T_ty_rec(std::shared_ptr<T_tyfields>($2));} 
+ty_rec:		'{' tyfields '}' 		{ $$ = new T_ty_rec(std::shared_ptr<T_tyfields>($2));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);} 
 ;
 
-ty_array:	ARRAY OF ID			{ $$ = new T_ty_array(std::string($3));}
+ty_array:	ARRAY OF ID			{ $$ = new T_ty_array(std::string($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-ty_funfun:	ty RETORNA ty			{ $$ = new T_ty_funfun(std::shared_ptr<T_ty>($1),std::shared_ptr<T_ty>($3));}
-		| '(' tylist ')' RETORNA ty	{ $$ = new T_ty_funfun(std::shared_ptr<T_tylist>($2),std::shared_ptr<T_ty>($5));}
+ty_funfun:	ty RETORNA ty			{ $$ = new T_ty_funfun(std::shared_ptr<T_ty>($1),std::shared_ptr<T_ty>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| '(' tylist ')' RETORNA ty	{ $$ = new T_ty_funfun(std::shared_ptr<T_tylist>($2),std::shared_ptr<T_ty>($5));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-tyfields:	%empty  			{ $$ = new T_tyfields();}
-		| ID ':' ID			{ $$ = new T_tyfields(); $$->add(std::string($1),std::string($3));}
+tyfields:	%empty  			{ $$ = new T_tyfields();
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| ID ':' ID			{ $$ = new T_tyfields(); $$->add(std::string($1),std::string($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| ID ':' ID ',' tyfields	{ $5->add(std::string($1),std::string($3)); $$ = $5;}
 ;
 
 //variaveis
 
-vardec:		VAR ID ATRIBUICAO exp 		{ $$ = new T_vardec(std::string($2),std::shared_ptr<T_exp>($4));}
-		| VAR ID ':' ID ATRIBUICAO exp	{ $$ = new T_vardec(std::string($2),std::string($4),std::shared_ptr<T_exp>($6));}
+vardec:		VAR ID ATRIBUICAO exp 		{ $$ = new T_vardec(std::string($2),std::shared_ptr<T_exp>($4));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| VAR ID ':' ID ATRIBUICAO exp	{ $$ = new T_vardec(std::string($2),std::string($4),std::shared_ptr<T_exp>($6));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
 //funcoes
 
 fundec:		FUNCTION ID '(' tyfields ')' ':' ID IGUAL exp	{ $$ = new T_fundec(std::string($2),
-								std::shared_ptr<T_tyfields>($4), std::string($7),std::shared_ptr<T_exp>($9));}
+								std::shared_ptr<T_tyfields>($4), std::string($7),std::shared_ptr<T_exp>($9));
+								$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| FUNCTION ID '(' tyfields ')' IGUAL exp	{ $$ = new T_fundec(std::string($2),
-								std::shared_ptr<T_tyfields>($4),std::shared_ptr<T_exp>($7));}
+								std::shared_ptr<T_tyfields>($4),std::shared_ptr<T_exp>($7));
+									$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
  
 //variaveis e expressoes
-lvalue:		ID				{ $$ = new T_lvalue(std::string($1));}
-		| lvalue PONTO ID		{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>($1), std::string($3));}
-		| lvalue '[' exp ']'		{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>($1), std::shared_ptr<T_exp>($3));}
+lvalue:		ID				{ $$ = new T_lvalue(std::string($1));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| lvalue PONTO ID		{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>($1), std::string($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| lvalue '[' exp ']'		{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
 //Expressoes
 
-op_arit:	exp ADICAO exp			{ $$ = new T_operacao("+", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp SUBTRACAO exp		{ $$ = new T_operacao("-", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp MULTIPLICACAO exp		{ $$ = new T_operacao("*", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp DIVISAO exp		{ $$ = new T_operacao("/", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
+op_arit:	exp ADICAO exp			{ $$ = new T_operacao("+", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp SUBTRACAO exp		{ $$ = new T_operacao("-", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp MULTIPLICACAO exp		{ $$ = new T_operacao("*", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp DIVISAO exp		{ $$ = new T_operacao("/", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-op_bool:	exp OR exp			{ $$ = new T_operacao("|", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp AND exp			{ $$ = new T_operacao("&", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
+op_bool:	exp OR exp			{ $$ = new T_operacao("|", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp AND exp			{ $$ = new T_operacao("&", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-op_comp:	exp IGUAL exp			{ $$ = new T_operacao("=", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp DIFERENTE exp		{ $$ = new T_operacao("<>", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp MENOR exp			{ $$ = new T_operacao("<", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp MENORIG exp		{ $$ = new T_operacao("<=", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp MAIOR exp			{ $$ = new T_operacao(">", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
-		| exp MAIORIG exp		{ $$ = new T_operacao(">=", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));}
+op_comp:	exp IGUAL exp			{ $$ = new T_operacao("=", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp DIFERENTE exp		{ $$ = new T_operacao("<>", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp MENOR exp			{ $$ = new T_operacao("<", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp MENORIG exp		{ $$ = new T_operacao("<=", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp MAIOR exp			{ $$ = new T_operacao(">", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp MAIORIG exp		{ $$ = new T_operacao(">=", std::shared_ptr<T_exp>($1), std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-exp_list:	%empty				{$$ = new T_exp_list();}
-		| exp				{$$ = new T_exp_list(); $$->add(std::shared_ptr<T_exp>($1));}
+exp_list:	%empty				{$$ = new T_exp_list();
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp				{$$ = new T_exp_list(); $$->add(std::shared_ptr<T_exp>($1));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| exp ',' exp_list		{$3->add(std::shared_ptr<T_exp>($1)); $$ = $3;}
 ;
 
-chamada:	ID '(' exp_list ')'		{$$ = new T_chamada(std::string($1),std::shared_ptr<T_exp_list>($3));}
+chamada:	ID '(' exp_list ')'		{$$ = new T_chamada(std::string($1),std::shared_ptr<T_exp_list>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 	//	| exp '(' exp_list ')'		{$$ = new T_chamada(std::shared_ptr<T_exp>($1),std::shared_ptr<T_exp_list>($3));}
 ;
 
-exp_seq: 	%empty 				{$$ = new T_exp_seq();}
-		| exp				{$$ = new T_exp_seq(); $$->add(std::shared_ptr<T_exp>($1));}
+exp_seq: 	%empty 				{$$ = new T_exp_seq();
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| exp				{$$ = new T_exp_seq(); $$->add(std::shared_ptr<T_exp>($1));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| exp ';' exp_seq		{$3->add(std::shared_ptr<T_exp>($1)); $$ = $3;}
 ;
 
 def_array:	ID '[' exp ']' OF exp %prec ARRAY_PREC { $$ = new T_def_array(std::string($1),
-						std::shared_ptr<T_exp>($3),std::shared_ptr<T_exp>($6));}
+						std::shared_ptr<T_exp>($3),std::shared_ptr<T_exp>($6));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-rec_enum: 	%empty				{$$ = new T_rec_enum();}
-		| enum_it			{$$ = new T_rec_enum(); $$->add(std::shared_ptr<T_enum_it>($1));}
+rec_enum: 	%empty				{$$ = new T_rec_enum();
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| enum_it			{$$ = new T_rec_enum(); $$->add(std::shared_ptr<T_enum_it>($1));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| enum_it ',' rec_enum		{$3->add(std::shared_ptr<T_enum_it>($1)); $$ = $3;}
 ;
 
-enum_it:	ID IGUAL exp			{$$ = new T_enum_it(std::string($1),std::shared_ptr<T_exp>($3));}
+enum_it:	ID IGUAL exp			{$$ = new T_enum_it(std::string($1),std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-def_rec: 	ID '{' rec_enum '}'		{$$ = new T_def_rec(std::string($1), std::shared_ptr<T_rec_enum>($3));}
+def_rec: 	ID '{' rec_enum '}'		{$$ = new T_def_rec(std::string($1), std::shared_ptr<T_rec_enum>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-subunario: 	SUBTRACAO exp %prec SUBUNARIO	{ $$ = new T_subunario(std::shared_ptr<T_exp>($2));}
+subunario: 	SUBTRACAO exp %prec SUBUNARIO	{ $$ = new T_subunario(std::shared_ptr<T_exp>($2));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-exp_if:		IF exp THEN exp %prec IF_PREC	{ $$ = new T_if(std::shared_ptr<T_exp>($2),std::shared_ptr<T_exp>($4));}
+exp_if:		IF exp THEN exp %prec IF_PREC	{ $$ = new T_if(std::shared_ptr<T_exp>($2),std::shared_ptr<T_exp>($4));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
 exp_if_else:	IF exp THEN exp ELSE exp	{ $$ = new T_if_else(std::shared_ptr<T_exp>($2),
-						std::shared_ptr<T_exp>($4),std::shared_ptr<T_exp>($6));}
+						std::shared_ptr<T_exp>($4),std::shared_ptr<T_exp>($6));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-exp_let:	LET declist IN exp_seq END	{ $$ = new T_let(std::shared_ptr<T_declist>($2),std::shared_ptr<T_exp_seq>($4));}
+exp_let:	LET declist IN exp_seq END	{ $$ = new T_let(std::shared_ptr<T_declist>($2),std::shared_ptr<T_exp_seq>($4));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
 exp:		lvalue
-		| NIL				{$$ = new T_nil();}
+		| NIL				{$$ = new T_nil(); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| '(' exp_seq ')'		{$$ = $2;}
-		| INT 				{$$ = new T_int(*$1);}
-		| FLOAT 			{$$ = new T_float(*$1);}
-		| STRING			{$$ = new T_string(*$1);}
+		| INT 				{$$ = new T_int(*$1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| FLOAT 			{$$ = new T_float(*$1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| STRING			{$$ = new T_string(*$1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| subunario
 		| chamada
 		| op_arit			

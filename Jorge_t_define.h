@@ -4,8 +4,22 @@
 
 using namespace std;
 
+class T_no{
+public:
+	int linha;
+	int coluna;
+	std::string linha_codigo;
 
-class T_exp {
+virtual ~T_no() {}
+
+	void set_localizacao(int linha, int coluna, std::string linha_codigo){
+		this->linha = linha;
+		this->coluna = coluna;
+		this->linha_codigo = linha_codigo;
+	}
+};
+
+class T_exp : public T_no{
 public:
 	virtual ~T_exp() {}
 };
@@ -36,12 +50,12 @@ public:
 	T_nil() {}
 };
 
-class T_dec {
+class T_dec : public T_no {
 public:
 	virtual ~T_dec() {}
 };
 
-class T_declist {
+class T_declist : public T_no{
 public:
 	std::vector<std::shared_ptr<T_dec>> declist;
 
@@ -50,7 +64,7 @@ public:
 	}
 };
 
-class T_ty {
+class T_ty : public T_no {
 public:
 	virtual ~T_ty() {}
 };
@@ -63,7 +77,7 @@ public:
 	T_tydec(const std::string &id, std::shared_ptr<T_ty> ty) : id(id), ty(std::move(ty)) {}
 };
 
-class T_tyfields{
+class T_tyfields: public T_no {
 public:
 	std::vector<std::string> tyfields;
 
@@ -94,7 +108,7 @@ public:
 	T_ty_array(const std::string &id) : id(id){}
 };
 
-class T_tylist {
+class T_tylist : public T_no{
 public:
 	std::vector<std::shared_ptr<T_ty>> tylist;
 
@@ -157,14 +171,14 @@ public:
 
 class T_operacao : public T_exp {
 public:
-	std::string op;
+	std::string operador;
  	std::shared_ptr<T_exp> eexp,dexp;
 
-	T_operacao(const std::string op, std::shared_ptr<T_exp> expe, std::shared_ptr<T_exp> expd)
-	: op(op), eexp(std::move(expe)), dexp(std::move(dexp)) {}
+	T_operacao(const std::string operador, std::shared_ptr<T_exp> expe, std::shared_ptr<T_exp> expd)
+	: operador(operador), eexp(std::move(expe)), dexp(std::move(dexp)) {}
 };
 
-class T_exp_list{
+class T_exp_list : public T_no{
 public:
 	std::vector<std::shared_ptr<T_exp>> exp_list;
 
@@ -195,7 +209,7 @@ public:
 	}
 };
 
-class T_enum_it {	
+class T_enum_it : public T_no{	
 public:
 	std::string id;
 	std::shared_ptr<T_exp> exp;
@@ -204,7 +218,7 @@ public:
 	: id(id), exp(std::move(exp)) {}
 };
 
-class T_rec_enum {	
+class T_rec_enum : public T_no{	
 public:
 	std::vector<std::shared_ptr<T_enum_it>> rec_enum;
 
