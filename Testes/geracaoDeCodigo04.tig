@@ -28,7 +28,12 @@ function look(t: tree, k: key) : binding =
 		else t.binding
 
 function enter(t: tree, k: key, b: binding): tree =
-	if k < t.key then
+	if t == nil then
+        tree{key=k,
+             binding=b,
+             left=nil,
+             right=nil}
+    else if k < t.key then
 		tree{key=t.key,
 		     binding=t.binding,
 		     left=enter(t.left, k, b),
@@ -42,6 +47,6 @@ function enter(t: tree, k: key, b: binding): tree =
                        binding=t.binding,
                        left=t.left,
                        right=t.right}
-
-
-
+                       
+var t = enter(enter(enter(enter(enter(enter(nil,"a",1),"b",2),"c",3),"d",4),"e",5),"f",6)
+print("Valor da chave 'e':",look(t, "e"))

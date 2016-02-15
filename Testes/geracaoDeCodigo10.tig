@@ -7,3 +7,27 @@
 
 */
 
+let
+
+    type intlist = {head: int, tail: intlist}
+
+    function menor(l:intList) = menor_r(l,l.head)
+
+    function menor_r(l:intList, m:int) =
+        if l == nil then m else 
+            if l.head < m then menor_r(l.tail,l.head) else menor_r(l.tail,m)
+            
+    var lista: intlist = intlist{head=34, tail=
+                         intlist{head=2, tail=
+                         intlist{head=87, tail=
+                         intlist{head=34, tail=
+                         intlist{head=12, tail=
+                         intlist{head=45, tail=
+                         intlist{head=3, tail=
+                         intlist{head=28, tail=
+                         intlist{head=99, tail=
+                         intlist{head=234, tail=nil}}}}}}}}}}
+
+in
+    print("Menor elemento:˜,menor(lista))
+end

@@ -7,3 +7,24 @@
 
 */
 
+let
+    type intlist = {head: int, tail: intlist}
+
+    function sumlist(l:intlist) = sumlist_r(l, 0)
+    
+    function sumlist_r(l:intlist, s:int) = 
+        if l == nil then s else sumlist_r(l.tail,l.head+s)
+     
+     var lista: intlist = intlist{head=34, tail=
+                         intlist{head=2, tail=
+                         intlist{head=87, tail=
+                         intlist{head=34, tail=
+                         intlist{head=12, tail=
+                         intlist{head=45, tail=
+                         intlist{head=3, tail=
+                         intlist{head=28, tail=
+                         intlist{head=99, tail=
+                         intlist{head=234, tail=nil}}}}}}}}}}
+in
+    print("Soma da lista:",sumlist(lista))
+end
