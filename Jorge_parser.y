@@ -51,7 +51,6 @@ int yylex();
 	T_def_rec* i_def_rec;
 	T_subunario* i_subunario;
 	T_if * i_if;
-	T_if_else* i_if_else;
 	T_let* i_let;
 }
 
@@ -76,8 +75,7 @@ int yylex();
 %type<i_def_rec> def_rec
 %type<i_def_array> def_array
 %type<i_subunario> subunario
-%type<i_if> exp_if
-%type<i_if_else> exp_if_else
+%type<i_if> exp_if exp_if_else
 %type<i_let> exp_let
 
 %right RETORNA
@@ -258,7 +256,7 @@ exp_if:		IF exp THEN exp %prec IF_PREC	{ $$ = new T_if(std::shared_ptr<T_exp>($2
 							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-exp_if_else:	IF exp THEN exp ELSE exp	{ $$ = new T_if_else(std::shared_ptr<T_exp>($2),
+exp_if_else:	IF exp THEN exp ELSE exp	{ $$ = new T_if(std::shared_ptr<T_exp>($2),
 						std::shared_ptr<T_exp>($4),std::shared_ptr<T_exp>($6));
 							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;

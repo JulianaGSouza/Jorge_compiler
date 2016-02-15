@@ -4,7 +4,7 @@
 
 #include "Jorge_parser.tab.h"
 
-typedef union{char* i_id; T_exp* i_exp; T_int* i_int; T_float* i_float; T_string* i_string; T_nil* i_nil; T_declist* i_declist; T_dec* i_dec; T_ty* i_ty; T_tylist* i_tylist; T_tyfields* i_tyfields; T_lvalue* i_lvalue; T_operacao* i_operacao; T_exp_list* i_exp_list; T_chamada* i_chamada; T_exp_seq* i_exp_seq; T_rec_enum* i_rec_enum; T_enum_it* i_enum_it; T_def_array* i_def_array; T_def_rec* i_def_rec; T_subunario* i_subunario; T_if* i_if; T_if_else* i_if_else; T_let* i_let;} YYTYPE;
+typedef union{char* i_id; T_exp* i_exp; T_int* i_int; T_float* i_float; T_string* i_string; T_nil* i_nil; T_declist* i_declist; T_dec* i_dec; T_ty* i_ty; T_tylist* i_tylist; T_tyfields* i_tyfields; T_lvalue* i_lvalue; T_operacao* i_operacao; T_exp_list* i_exp_list; T_chamada* i_chamada; T_exp_seq* i_exp_seq; T_rec_enum* i_rec_enum; T_enum_it* i_enum_it; T_def_array* i_def_array; T_def_rec* i_def_rec; T_subunario* i_subunario; T_if* i_if; T_let* i_let;} YYTYPE;
 
 char bf_linha_scanner[500];
 unsigned yycolumn = 0;

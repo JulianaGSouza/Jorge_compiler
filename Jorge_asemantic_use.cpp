@@ -14,8 +14,14 @@ class Tabela_tipos_item{
 public:
 	enum_tipo_list tipo;
 	std::string nome;
-	std::string valor_id;
+	std::shared_ptr<Tabela_tipos_item> tipo_pai;
 	std::shared_ptr<T_tyfields> valor_rec;
+
+	Tabela_tipos_item(std::string nome) 
+	: nome(nome) {}
+
+	Tabela_tipos_item(enum_tipo_list tipo, std::string nome) 
+	: tipo(tipo), nome(nome) {}
 };
 
 class Tabela_var_fun_item{
@@ -23,6 +29,8 @@ public:
 	std::string nome;
 	std::shared_ptr<T_tyfields> parametros;
 	std::shared_ptr<Tabela_tipos_item> tipo;
+
+	Tabela_var_fun_item(std::string nome) : nome(nome) {}
 };
 
 class Tabela_simbolos {
@@ -35,7 +43,7 @@ public:
 
 	Tabela_simbolos(std::shared_ptr<Tabela_simbolos> pai) : pai(pai){}	
 	
-	void inserir_tipos(std::shared_ptr<Tabela_tipos_item> item){
+	void inserir_tipo(std::shared_ptr<Tabela_tipos_item> item){
 		std::pair<std::string,std::shared_ptr<Tabela_tipos_item>> par (item->nome,item);
 		tabela_tipos.insert(par);
 	}
@@ -141,26 +149,16 @@ std::shared_ptr<Tabela_tipos_item> verifica_fun(T_no* no, std::string nome){
 std::shared_ptr<Tabela_tipos_item> analisa_exp(std::shared_ptr<T_exp> no);
 std::shared_ptr<Tabela_tipos_item> analisa_lvalue(T_lvalue* no);
 
-std::shared_ptr<Tabela_tipos_item> verifica_se_numero(T_no* no,std::shared_ptr<Tabela_tipos_item> tipo_exp){
-	if(tipo_exp->tipo == enum_tipo_list::id and 
-		(tipo_exp->nome.compare("int") == 0 or tipo_exp->nome.compare("float") == 0 )){
-		return tipo_exp;
-	}else{
-		std::string msg = "A expressão que segue o sinal de '-' deve ser um inteiro ou float, não " +tipo_exp->nome+"!";
-		print_erro_semantico(no,msg);
-	};
-}
-
 std::shared_ptr<Tabela_tipos_item> analisa_lvalue_array(T_lvalue* no){
 	std::shared_ptr<Tabela_tipos_item> tipo_exp= analisa_exp(no->exp);		
 	if(tipo_exp->nome.compare("int") == 0 and tipo_exp->tipo == enum_tipo_list::id){
 		std::shared_ptr<Tabela_tipos_item> tipo_lvalue = analisa_lvalue((no->lvalue).get());
-		if(tipo_lvalue->tipo == enum_tipo_list::array){
-			return procura_tipo(tipo_lvalue->nome,tabela_atual);
-		} else {
+		if(tipo_lvalue->tipo != enum_tipo_list::array){
 			std::string msg = "A variável não é um array!";
-			print_erro_semantico(no, msg);
+			print_erro_semantico(no, msg);		
 		};
+		
+		return tipo_lvalue->tipo_pai;
 	} else {
 		std::string msg = "O valor entre couchetes deve ser inteiro!";
 		print_erro_semantico(no, msg);
@@ -184,7 +182,6 @@ std::shared_ptr<Tabela_tipos_item> analisa_lvalue(T_lvalue* no){
 	}else if(no->lvalue){
 		return analisa_lvalue_rec(no);
 	}else {
-		//É uma variavel
 		return verifica_var(no,no->id);			
 	};
 };
@@ -199,7 +196,13 @@ std::shared_ptr<Tabela_tipos_item> analisa_exp_seq(T_exp_seq* no){
 
 std::shared_ptr<Tabela_tipos_item> analisa_subunario(T_subunario* no){
 	std::shared_ptr<Tabela_tipos_item> tipo_exp= analisa_exp(no->exp);
-	return verifica_se_numero(no, tipo_exp);
+	if(tipo_exp->tipo == enum_tipo_list::id and 
+		(tipo_exp->nome.compare("int") == 0 or tipo_exp->nome.compare("float") == 0 )){
+		return tipo_exp;
+	}else{
+		std::string msg = "A expressão que segue o sinal de '-' deve ser um inteiro ou float, não " +tipo_exp->nome+"!";
+		print_erro_semantico(no,msg);
+	};
 }
 
 std::shared_ptr<Tabela_tipos_item> analisa_chamada(T_chamada* no){
@@ -208,10 +211,208 @@ std::shared_ptr<Tabela_tipos_item> analisa_chamada(T_chamada* no){
 	return tipo_fun;
 };
 
-std::shared_ptr<Tabela_tipos_item> analisa_operacao(T_operacao* no){
+std::shared_ptr<Tabela_tipos_item> analisa_if(T_if* no){
+	std::shared_ptr<Tabela_tipos_item> tipo_exp1 = analisa_exp(no->exp1);
+	if (tipo_exp1->nome.compare("int") != 0){
+		std:string msg = "A expressão após 'IF' deve possuir um valor inteiro, não " +tipo_exp1->nome +"!";
+		print_erro_semantico(no,msg);
+	};
+		
+	std::shared_ptr<Tabela_tipos_item> tipo_exp2 = analisa_exp(no->exp2);
+	if(no->exp3){
+		std::shared_ptr<Tabela_tipos_item> tipo_exp3 = analisa_exp(no->exp3);
+		if (tipo_exp2 != tipo_exp3){
+			std::string msg = "Tipos incompatíveis. O tipo da expressão após 'THEN' é " + tipo_exp2->nome +
+				" e o tipo da expressão após 'ELSE' é " + tipo_exp3->nome + "!";
+			print_erro_semantico(no,msg);
+		};
+	};
+	std::string tipo_retorno = "nil";
+	return procura_tipo(tipo_retorno,tabela_atual);
+};
 
-/*
+void analisa_ty_id(T_ty_id* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
+	std::shared_ptr<Tabela_tipos_item> tipo_pai = verifica_tipo(no,no->id);
+	novo_tipo->tipo = enum_tipo_list::id;
+	novo_tipo->tipo_pai = tipo_pai;
+};
+
+void analisa_ty_rec(T_ty_rec* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
+	novo_tipo->tipo = enum_tipo_list::rec;
+	//construir tyfield
+	//	item->valor_rec = no->tyfields;	
+	//analisa_tyfields((no->tyfields).get());
+};
+
+void analisa_ty_array(T_ty_array* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
+	std::shared_ptr<Tabela_tipos_item> tipo_pai = verifica_tipo(no,no->id);
+	novo_tipo->tipo = enum_tipo_list::array;
+	novo_tipo->tipo_pai = tipo_pai;
+};
+
+void analisa_ty_funfun(T_ty_funfun* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
+	//Cria novo escopo
+	tabela_atual = std::shared_ptr<Tabela_simbolos>(new Tabela_simbolos(tabela_atual));
+	
+	//item->tipo = "tipo_funfun";
+	if(no->tylist){
+		//analisa_tylist((no_ty->tylist).get());
+	}else {
+		//analisa_ty(no_ty->ty1);
+	};
+	//analisa_ty(no_ty->ty2);
+};
+
+void analisa_ty(std::shared_ptr<T_ty> no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
+	if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_id>::element_type*>(no.get())){
+		analisa_ty_id(no_ty, novo_tipo);	
+	} else if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_rec>::element_type*>(no.get())){
+		analisa_ty_rec(no_ty,novo_tipo);
+	} else if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_array>::element_type*>(no.get())){
+		analisa_ty_array(no_ty,novo_tipo);
+	} if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_funfun>::element_type*>(no.get())){
+		analisa_ty_funfun(no_ty, novo_tipo);	
+	};
+};
+
+void analisa_tydec(T_tydec* no){
+	std::shared_ptr<Tabela_tipos_item> item = tabela_atual->procura_tipo_no_escopo(no->id);
+
+	if(item){
+		std::string msg = "O tipo " + no->id + " já existe neste escopo!";
+		print_erro_semantico(no,msg);
+	};
+
+	std::shared_ptr<Tabela_tipos_item> novo_tipo (new Tabela_tipos_item(no->id));
+	analisa_ty(no->ty,novo_tipo);
+	tabela_atual->inserir_tipo(novo_tipo);
+};
+
+void analisa_vardec(T_vardec* no){
+	std::shared_ptr<Tabela_var_fun_item> item = tabela_atual->procura_var_fun_no_escopo(no->nome);
+	if(item){
+		std::string msg = no->nome +" já existe neste escopo!";
+		print_erro_semantico(no,msg);
+	};
+	
+	std::shared_ptr<Tabela_var_fun_item> nova_var (new Tabela_var_fun_item(no->nome));
+
+	std::shared_ptr<Tabela_tipos_item> tipo_exp = analisa_exp(no->exp);
+
+	if (!(no->tipo).empty()){
+		std::shared_ptr<Tabela_tipos_item> tipo_pai = verifica_tipo(no,no->tipo);
+		nova_var->tipo = tipo_pai;
+
+		if(tipo_exp != tipo_pai){
+			std::string msg = "Incompatibilidade de tipos. O tipo declarado é " + 
+				tipo_pai->nome +" e o tipo da expressão é " + tipo_exp->nome + "!";
+			print_erro_semantico(no, msg);
+		};
+	} else {
+		nova_var->tipo = tipo_exp;
+	};						
+
+	tabela_atual->inserir_var_fun(nova_var);
+};
+
+void analisa_fundec(T_fundec* no){
+	//Criar novo escopo
+	tabela_atual = std::shared_ptr<Tabela_simbolos>(new Tabela_simbolos(tabela_atual));	
+
+	std::shared_ptr<Tabela_var_fun_item> item = tabela_atual->procura_var_fun_no_escopo(no->nome);
+	if(item){
+		std::string msg = no->nome +" já existe neste escopo!";
+		print_erro_semantico(no,msg);
+	};
+	
+	std::shared_ptr<Tabela_var_fun_item> nova_fun (new Tabela_var_fun_item(no->nome));
+
+	std::shared_ptr<Tabela_tipos_item> tipo_exp = analisa_exp(no->exp);
+
+	if (!(no->tipo).empty()){
+		std::shared_ptr<Tabela_tipos_item> tipo_pai = verifica_tipo(no,no->tipo);
+		nova_fun->tipo = tipo_pai;
+
+		if(tipo_exp != tipo_pai){
+			std::string msg = "Incompatibilidade de tipos. O tipo declarado é " + 
+				tipo_pai->nome +" e o tipo retornado é " + tipo_exp->nome + "!";
+			print_erro_semantico(no, msg);
+		};
+	} else {
+		std::string tipo_nil = "nil";
+		nova_fun->tipo = procura_tipo(tipo_nil,tabela_atual);
+	};						
+
+	//lidar com parâmetros
+	//analisa_tyfields((no->tyfields).get());
+
+	tabela_atual->inserir_var_fun(nova_fun);
+};
+
+void analisa_dec(std::shared_ptr<T_dec> no){
+	if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_tydec>::element_type*>(no.get())){
+		analisa_tydec(no_ty);
+	} else if (auto no_var = dynamic_cast<typename std::shared_ptr<T_vardec>::element_type*>(no.get())){
+		analisa_vardec(no_var);
+	} else if (auto no_fun = dynamic_cast<typename std::shared_ptr<T_fundec>::element_type*>(no.get())){
+		analisa_fundec(no_fun);
+	};
+};
+
+void analisa_declist(std::shared_ptr<T_declist> no){
+	std::vector<std::shared_ptr<T_dec>> declist (no->declist);
+	for(std::shared_ptr<T_dec> dec: declist){
+		analisa_dec(dec);
+	};
+};
+
+std::shared_ptr<Tabela_tipos_item> analisa_let(T_let* no){
+	analisa_declist(no->declist);
+	return analisa_exp_seq((no->exp_seq).get());
+};
+
+std::shared_ptr<Tabela_tipos_item> analisa_def_array(T_def_array* no){
+	std::shared_ptr<Tabela_tipos_item> tipo_pai = verifica_tipo(no,no->tipo);
+
+	if(tipo_pai->tipo != enum_tipo_list::array){
+		std::string msg = "O tipo " + no->tipo +" não é um array!";
+		print_erro_semantico(no,msg);
+	};
+
+	std::shared_ptr<Tabela_tipos_item> tipo_exp1 = analisa_exp(no->exp1);
+	if (tipo_exp1->nome.compare("int") != 0){
+		std:string msg = "A expressão entre colchetes deve possuir um valor inteiro, não "+ tipo_exp1->nome+"!";
+		print_erro_semantico(no,msg);
+	};
+
+	std::shared_ptr<Tabela_tipos_item> tipo_exp2 = analisa_exp(no->exp2);
+	if(tipo_exp2 != tipo_pai){
+		std::string msg = "O valor de inicialização deve possuir o mesmo tipo do array: "+tipo_pai->nome +
+			", mas possui o tipo " + tipo_exp2->nome + "!";
+		print_erro_semantico(no,msg);
+	};
+
+	return tipo_pai;
+};
+
+std::shared_ptr<Tabela_tipos_item> analisa_def_rec(T_def_rec* no){
+	std::shared_ptr<Tabela_tipos_item> tipo_pai = verifica_tipo(no,no->tipo);
+
+	if(tipo_pai->tipo != enum_tipo_list::rec){
+		std::string msg = "O tipo " + no->tipo +" não é record!";
+		print_erro_semantico(no,msg);
+	};
+
+	//verificar a enumeracao;
+	//analisa_rec_enum((no_def_rec->rec_enum).get());
+	
+	return tipo_pai;
+};
+
+
+std::shared_ptr<Tabela_tipos_item> analisa_operacao(T_operacao* no){
 	std::shared_ptr<Tabela_tipos_item> eexp_tipo = analisa_exp(no->eexp);
+
 	std::shared_ptr<Tabela_tipos_item> dexp_tipo = analisa_exp(no->dexp);
 	if (eexp_tipo.compare(dexp_tipo) != 0){
 		std::cout << "Semantic Error: Incompatibilidade de tipos. A expressão à esquerda do operador; "
@@ -220,7 +421,7 @@ std::shared_ptr<Tabela_tipos_item> analisa_operacao(T_operacao* no){
 		exit(0);
 	} else {
 		return eexp_tipo;
-	};*/
+	};
 };
 
 /*
@@ -239,131 +440,6 @@ void analisa_tylist(T_tylist* no){
 		//analisa_ty(ty);
 	}
 }
-
-void analisa_ty_id(T_ty_id* no,std::shared_ptr<Ts_item_tipo> item){
-	shared_ptr<Ts_item> ts_item(procura_ts_item(no->id,ts_atual));
-	if (ts_item){
-		item->tipo = Ts::tipo_list::tipo_id;
-		item->valor_id = no->id;
-	} else {
-		std::cout << "Semantic Error: "<< no->id << "não é um tipo declarado" << std::endl;
-		exit(0);
-	};
-};
-
-void analisa_ty_rec(T_ty_rec* no,std::shared_ptr<Ts_item_tipo> item){
-	item->tipo = Ts::tipo_list::tipo_rec;
-	item->valor_rec = no->tyfields;
-	analisa_tyfields((no->tyfields).get());
-};
-
-void analisa_ty_array(T_ty_array* no, std::shared_ptr<Ts_item_tipo> item){
-	shared_ptr<Ts_item> ts_item(procura_ts_item(no->id,ts_atual));
-	if (ts_item){
-		item->tipo = Ts::ts_list::tipo_array;
-		item->valor_id = no->id;
-	} else {
-		std::cout << "Semantic Error: "<< no->id << "não é um tipo declarado" << std::endl;
-		exit(0);
-	};
-};
-
-void analisa_ty_funfun(T_ty_funfun* no, std::shared_ptr<Ts_item_tipo> item){
-	//Criar novo escopo
-	std::shared_ptr<Ts> ts_novo(new Ts(ts_atual));
-	std::shared_ptr<Ts> ts_atual(ts_novo);
-	
-	//item->tipo = "tipo_funfun";
-	
-	if(no->tylist){
-		//analisa_tylist((no_ty->tylist).get());
-	}else {
-		//analisa_ty(no_ty->ty1);
-	};
-	//analisa_ty(no_ty->ty2);
-};
-
-void analisa_ty(std::shared_ptr<T_ty> no, std::shared_ptr<Ts_item_tipo> item){
-	if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_id>::element_type*>(no.get())){
-		analisa_ty_id(no_ty,item);	
-	} else if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_rec>::element_type*>(no.get())){
-		analisa_ty_rec(no_ty,item);
-	} else if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_array>::element_type*>(no.get())){
-		analisa_ty_array(no_ty,item);
-	} if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_ty_funfun>::element_type*>(no.get())){
-		analisa_ty_funfun(no_ty, item);	
-	} else {
-		//erro;
-	};
-};
-
-void analisa_tydec(){
-	shared_ptr<Ts_item> ts_item(ts_atual->procura_no_escopo(no_ty->id));
-	if(ts_item){
-		std::cout << "Semantic Error: O tipo " << no_ty->id << " já existe neste escopo!";
-		exit(0);
-	} else {
-		std::shared_ptr<Ts_item_tipo> item (new Ts_item_tipo());
-		item->nome = no_ty->id;						
-		analisa_ty(no_ty->ty,item);
-		ts_atual->inserir(item);
-	};
-};
-
-void analisa_vardec(T_vardec* no){
-	shared_ptr<Ts_item> ts_item1(ts_atual->procura_no_escopo(no->nome));
-	if(ts_item1){
-		std::cout << "Semantic Error: A variável " << no->nome << " já existe neste escopo!" << std::endl;
-		exit(0);
-	} else {
-		std::shared_ptr<Ts_item_var> item (new Ts_item_var());
-		item->nome = no->nome;
-		std::string tipo_exp = analisa_exp(no->exp);
-		if (!(no->tipo).empty()){
-			shared_ptr<Ts_item> ts_item2(procurar_item(no->tipo,ts_atual));
-			if (ts_item2){
-				item->tipo = no->tipo;
-			} else {
-				std::cout << "Semantic Error: O tipo " << no->tipo  << " atribuído à variável ";
-				std::cout << no->nome << " não existe!" << std::endl;
-				exit(0);
-			};
-			if(tipo_exp.compare(no->tipo) != 0){
-				std::cout << "Semantic Error: Incompatibilidade de tipos. O tipo declarado é " << no->tipo;
-				std::cout << " e o tipo da expressão é " << tipo_exp << "!"<< std::endl;
-			};
-		};						
-		ts_atual->inserir(item);
-	};
-};
-
-void analisa_fundec(T_vardec* no){
-	//Criar novo escopo
-	std::shared_ptr<Ts> ts_novo(new Ts(ts_atual));
-	std::shared_ptr<Ts> ts_atual(ts_novo);
-	//verifica id id
-	analisa_tyfields((no->tyfields).get());
-	analisa_exp(no->exp);
-};
-
-void analisa_dec(std::shared_ptr<T_dec> no){
-	if (auto no_ty = dynamic_cast<typename std::shared_ptr<T_tydec>::element_type*>(no.get())){
-		analisa_tydec(no_ty);
-	} else if (auto no_var = dynamic_cast<typename std::shared_ptr<T_vardec>::element_type*>(no.get())){
-		analisa_vardec(no_var);
-	} else if (auto no_fun = dynamic_cast<typename std::shared_ptr<T_fundec>::element_type*>(no.get())){
-		analisa_fundec(no_fun);
-	} else {
-		//erro
-	};	
-};
-
-void analisa_declist(T_declist* no){
-	std::vector<std::shared_ptr<T_dec>> declist (no->declist);
-	for(std::shared_ptr<T_dec> dec: declist){
-		analisa_dec(dec);
-	};
-};
 
 void analisa_it(T_enum_it* no){
 	//verifica id
@@ -384,91 +460,7 @@ void analisa_exp_list(T_exp_list* no){
 	}
 }
 
-std::string analisa_def_array(T_def_array* no){
-	std::shared_ptr<Ts_item> ts_item(procura_item(no_def_array->tipo,ts_atual));
-	std::string tipo_exp1;
-	std::string tipo_exp2;
-	if (ts_item){
-		if(ts_item->tipo == Ts::tipo_list::tipo_array){
-			tipo_exp1 = analisa_exp(no->exp1);
-			if(tipo_exp1.compare("int") == 0){
-				tipo_exp2 = analisa_exp(no->exp2);
-				if(tipo_exp2 == no->tipo){
-					return "array of "+ no->tipo;
-				} else {
-					std::cout << "Semantic Error: A expressão após 'OF' deve possuir o mesmo tipo do array: ";
-					std::cout << no->tipo <<", mas possui o tipo " << tipo_exp2 << "!" << std::endl;
-					exit(0);
-				};
-			} else {
-				std::cout << "Semantic Error: A expressão entre couchetes deve possuir um valor inteiro, não ";
-				std::cout << tipo_exp1 <<"!" << std::endl;
-				exit(0);
-			};
-		} else {
-			std::cout << "Semantic Error: O tipo " << no->tipo;
-			std::cout << " não é um array!" << std::endl;
-			exit(0);
-		};
-	} else {
-		std::cout << "Semantic Error: O tipo array " << no->tipo;
-		std::cout << " não existe!" << std::endl;
-		exit(0);
-	};
-};
-
-std::string analisa_def_rec(T_def_rec* no){
-	std::shared_ptr<Ts_item> ts_item(procura_item(no_def_rec->tipo,ts_atual));
-	if (ts_item){
-		if(ts_item->tipo == Ts::tipo_list::tipo_rec){
-			return analisa_rec_enum((no_def_rec->rec_enum).get());
-		} else {
-			std::cout << "Semantic Error: O tipo " << no_def_rec->tipo;
-			std::cout << " não é um record!" << std::endl;
-			exit(0);
-		};
-	} else {
-		std::cout << "Semantic Error: O tipo record " << no_def_rec->tipo;
-		std::cout << " não existe!" << std::endl;
-		exit(0);
-	};
-};
-
-std::string analisa_if_else(T_if_else* no){
-	std::string tipo_exp1 = analisa_exp(no->exp1);
-	if (tipo_exp1.compare("int")==0){
-		std::string tipo_exp2 = analisa_exp(no->exp2);
-		std::string tipo_exp3 = analisa_exp(no->exp3);
-		if (tipo_exp2 == tipo_exp3){
-			return "nil";
-		} else {
-			std::cout << "Semantic Error: Tipos incompatíveis. O tipo da expressão após 'THEN' é " << tipo_exp2;
-			std::cout << " e o tipo da expressão após 'ELSE' é " << tipo_exp3 <<"!" << std::endl;
-			exit(0);
-		}
-	} else {
-		std::cout << "Semantic Error: A expressão após 'IF' deve possuir um valor inteiro, não ";
-		std::cout << tipo_exp1 <<"!" << std::endl;
-		exit(0);
-	};
-}
-
-std::string analisa_if(T_if* no){
-	std::string tipo_exp1 = analisa_exp(no->exp1);
-	if (tipo_exp1.compare("int") == 0){
-		analisa_exp(no->exp2);
-		return "nil";
-	} else {
-		std::cout << "Semantic Error: A expressão após 'IF' deve possuir um valor inteiro, não ";
-		std::cout << tipo_exp1 <<"!" << std::endl;
-		exit(0);
-	};
-};
-
-std::string analisa_let(T_let* no){
-	analisa_declist(no->declist);
-	return analisa_exp_seq((no->exp_seq).get());
-};*/
+*/
 
 std::shared_ptr<Tabela_tipos_item> analisa_exp(std::shared_ptr<T_exp> no){
 	if (auto no_int = dynamic_cast<typename std::shared_ptr<T_int>::element_type*>(no.get())){
@@ -494,23 +486,29 @@ std::shared_ptr<Tabela_tipos_item> analisa_exp(std::shared_ptr<T_exp> no){
 	} else if (auto no_operacao = dynamic_cast<typename std::shared_ptr<T_operacao>::element_type*>(no.get())){
 		return analisa_operacao(no_operacao);
 	} else if (auto no_def_array = dynamic_cast<typename std::shared_ptr<T_def_array>::element_type*>(no.get())){
-		//return analisa_def_array (no_def_array);
+		return analisa_def_array (no_def_array);
 	} else if (auto no_def_rec = dynamic_cast<typename std::shared_ptr<T_def_rec>::element_type*>(no.get())){
-		//return analisa_def_rec(no_def_rec);
-	} else if (auto no_if_else = dynamic_cast<typename std::shared_ptr<T_if_else>::element_type*>(no.get())){
-		//return analisa_if_else(no_if_else);
+		return analisa_def_rec(no_def_rec);
 	} else if (auto no_if = dynamic_cast<typename std::shared_ptr<T_if>::element_type*>(no.get())){
-		//return analisa_if(no_if);
+		return analisa_if(no_if);
 	} else if (auto no_let = dynamic_cast<typename std::shared_ptr<T_let>::element_type*>(no.get())){
-		//return analisa_let(no_let);
-	} else {
-		//erro
+		return analisa_let(no_let);
 	};
 };
 
 void inicializa(){
-	//coloca tipos e funções primitivos
-	//Tipos primitidos: int, float, string, nil
+	std::shared_ptr<Tabela_tipos_item> tipo_nil(new Tabela_tipos_item(enum_tipo_list::id,"nil"));
+	tabela_atual->inserir_tipo(tipo_nil);
+
+	std::shared_ptr<Tabela_tipos_item> tipo_int(new Tabela_tipos_item(enum_tipo_list::id,"int"));
+	tabela_atual->inserir_tipo(tipo_int);
+	
+	std::shared_ptr<Tabela_tipos_item> tipo_float(new Tabela_tipos_item(enum_tipo_list::id,"float"));
+	tabela_atual->inserir_tipo(tipo_float);
+
+	std::shared_ptr<Tabela_tipos_item> tipo_string(new Tabela_tipos_item(enum_tipo_list::id,"string"));
+	tabela_atual->inserir_tipo(tipo_string);
+
 	//Funções primitivas: print, flush, getchar, ord, chr, size, substring, concat, not, exit
 };
 

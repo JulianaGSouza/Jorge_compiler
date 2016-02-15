@@ -143,15 +143,15 @@ public:
 
 class T_fundec : public T_dec {
 public:
-	std::string id1, id2;
+	std::string nome, tipo;
 	std::shared_ptr<T_tyfields> tyfields;
 	std::shared_ptr<T_exp> exp;
 
-	T_fundec(const std::string &id1, std::shared_ptr<T_tyfields> tyfields, const std::string &id2, std::shared_ptr<T_exp> exp)
-	: id1(id1), tyfields(std::move(tyfields)), id2(id2), exp(std::move(exp)) {}
+	T_fundec(const std::string &nome, std::shared_ptr<T_tyfields> tyfields, const std::string &tipo, std::shared_ptr<T_exp> exp)
+	: nome(nome), tyfields(std::move(tyfields)), tipo(tipo), exp(std::move(exp)) {}
 
-	T_fundec(const std::string &id1, std::shared_ptr<T_tyfields> tyfields, 
-	std::shared_ptr<T_exp> exp) : id1(id1), tyfields(std::move(tyfields)), exp(std::move(exp)) {}		
+	T_fundec(const std::string nome, std::shared_ptr<T_tyfields> tyfields, 
+	std::shared_ptr<T_exp> exp) : nome(nome), tyfields(std::move(tyfields)), exp(std::move(exp)) {}		
 };
 
 class T_lvalue : public T_exp {
@@ -254,19 +254,23 @@ public:
 
 class T_if : public T_exp {
 public:
-	std::shared_ptr<T_exp> exp1,exp2;
+	std::shared_ptr<T_exp> exp1,exp2,exp3;
 
 	T_if(std::shared_ptr<T_exp> exp1, std::shared_ptr<T_exp> exp2) 
 	: exp1(std::move(exp1)),exp2(std::move(exp2)) {}
+
+	T_if(std::shared_ptr<T_exp> exp1, std::shared_ptr<T_exp> exp2,std::shared_ptr<T_exp> exp3) 
+	: exp1(std::move(exp1)),exp2(std::move(exp2)),exp3(std::move(exp3)) {}
 };
 
+/*
 class T_if_else : public T_exp {
 public:
 	std::shared_ptr<T_exp> exp1,exp2,exp3;
 
 	T_if_else(std::shared_ptr<T_exp> exp1, std::shared_ptr<T_exp> exp2,std::shared_ptr<T_exp> exp3) 
 	: exp1(std::move(exp1)),exp2(std::move(exp2)),exp3(std::move(exp3)) {}
-};
+};*/
 
 class T_let : public T_exp {
 public:
