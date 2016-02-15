@@ -15,7 +15,7 @@ public:
 	enum_tipo_list tipo;
 	std::string nome;
 	std::shared_ptr<Tabela_tipos_item> tipo_pai;
-	std::shared_ptr<T_tyfields> valor_rec;
+	std::unordered_map<std::string,std::shared_ptr<Tabela_tipos_item>> enum_rec;
 
 	Tabela_tipos_item(std::string nome) 
 	: nome(nome) {}
@@ -77,7 +77,7 @@ std::shared_ptr<Tabela_simbolos> tabela_global(new Tabela_simbolos());
 std::shared_ptr<Tabela_simbolos> tabela_atual(tabela_global);
 
 
-std::shared_ptr<Tabela_tipos_item> procura_tipo(std::string &nome, shared_ptr<Tabela_simbolos> tabela_simbolos){
+std::shared_ptr<Tabela_tipos_item> procura_tipo(std::string &nome, shared_ptr<Tabela_simbolos> tabela_simbolos = tabela_atual){
 	std::shared_ptr<Tabela_tipos_item> item = tabela_simbolos->procura_tipo_no_escopo(nome);
 
 	if (item) 
@@ -88,7 +88,7 @@ std::shared_ptr<Tabela_tipos_item> procura_tipo(std::string &nome, shared_ptr<Ta
 		return NULL;	
 };
 
-std::shared_ptr<Tabela_var_fun_item> procura_var_fun(std::string &nome, shared_ptr<Tabela_simbolos> tabela_simbolos){
+std::shared_ptr<Tabela_var_fun_item> procura_var_fun(std::string &nome, shared_ptr<Tabela_simbolos> tabela_simbolos = tabela_atual){
 	std::shared_ptr<Tabela_var_fun_item> item = tabela_simbolos->procura_var_fun_no_escopo(nome);
 	
 	if (item) 
@@ -106,7 +106,7 @@ void print_erro_semantico(T_no* no, std::string msg){
 };
 
 shared_ptr<Tabela_tipos_item> verifica_tipo(T_no* no, std::string nome){
-	shared_ptr<Tabela_tipos_item> item(procura_tipo(nome,tabela_atual));
+	shared_ptr<Tabela_tipos_item> item(procura_tipo(nome));
 	if (item){
 		return item;
 	} else {
@@ -116,7 +116,7 @@ shared_ptr<Tabela_tipos_item> verifica_tipo(T_no* no, std::string nome){
 };
 
 shared_ptr<Tabela_var_fun_item> verifica_var_fun(T_no* no, std::string nome){
-	shared_ptr<Tabela_var_fun_item> item(procura_var_fun(nome,tabela_atual));
+	shared_ptr<Tabela_var_fun_item> item(procura_var_fun(nome));
 	if (item){
 		return item;
 	} else {
@@ -167,13 +167,20 @@ std::shared_ptr<Tabela_tipos_item> analisa_lvalue_array(T_lvalue* no){
 
 std::shared_ptr<Tabela_tipos_item> analisa_lvalue_rec(T_lvalue* no){
 	std::shared_ptr<Tabela_tipos_item> tipo_lvalue = analisa_lvalue((no->lvalue).get());
-	if(tipo_lvalue->tipo == enum_tipo_list::rec){
-		//verificar se id faz parte de record
-		//retornar tipo de id
-	}else{
+	if(tipo_lvalue->tipo != enum_tipo_list::rec){
 		std::string msg = "A variável não é um record!";
 		print_erro_semantico(no, msg);
+	};		
+
+	std::unordered_map<std::string,std::shared_ptr<Tabela_tipos_item>> tyfields = tipo_lvalue->enum_rec;
+
+	std::unordered_map<std::string, std::shared_ptr<Tabela_tipos_item>>::const_iterator got = tyfields.find(no->id);
+	if (got == tyfields.end()) {
+		std::string msg = "O campo "+no->id+" não pertence ao record";
+		print_erro_semantico(no,msg);
 	};
+
+	return got->second;
 };
 
 std::shared_ptr<Tabela_tipos_item> analisa_lvalue(T_lvalue* no){
@@ -228,7 +235,7 @@ std::shared_ptr<Tabela_tipos_item> analisa_if(T_if* no){
 		};
 	};
 	std::string tipo_retorno = "nil";
-	return procura_tipo(tipo_retorno,tabela_atual);
+	return procura_tipo(tipo_retorno);
 };
 
 void analisa_ty_id(T_ty_id* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
@@ -239,9 +246,16 @@ void analisa_ty_id(T_ty_id* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
 
 void analisa_ty_rec(T_ty_rec* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
 	novo_tipo->tipo = enum_tipo_list::rec;
-	//construir tyfield
-	//	item->valor_rec = no->tyfields;	
-	//analisa_tyfields((no->tyfields).get());
+
+	typedef std::unordered_map<std::string,std::string> Tyfields;
+	Tyfields no_tf = no->tyfields->tyfields;
+
+	for (Tyfields::iterator it = no_tf.begin(); it != no_tf.end(); ++it){ 
+		std::string tipo_item_name = it->second;
+		std::shared_ptr<Tabela_tipos_item> tipo_item =  verifica_tipo(no,tipo_item_name);		
+		std::pair<std::string,std::shared_ptr<Tabela_tipos_item>> par (it->first,tipo_item);
+		novo_tipo->enum_rec.insert(par); 
+	};
 };
 
 void analisa_ty_array(T_ty_array* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
@@ -340,7 +354,7 @@ void analisa_fundec(T_fundec* no){
 		};
 	} else {
 		std::string tipo_nil = "nil";
-		nova_fun->tipo = procura_tipo(tipo_nil,tabela_atual);
+		nova_fun->tipo = procura_tipo(tipo_nil);
 	};						
 
 	//lidar com parâmetros
@@ -403,78 +417,82 @@ std::shared_ptr<Tabela_tipos_item> analisa_def_rec(T_def_rec* no){
 		print_erro_semantico(no,msg);
 	};
 
-	//verificar a enumeracao;
-	//analisa_rec_enum((no_def_rec->rec_enum).get());
-	
+	for(std::shared_ptr<T_enum_it> it : no->rec_enum->rec_enum){
+		std::unordered_map<std::string, std::shared_ptr<Tabela_tipos_item>>::const_iterator got = tipo_pai->enum_rec.find(it->id);
+		if (got == tipo_pai->enum_rec.end()) {
+			std::string msg = "O campo "+it->id+" não pertence ao record";
+			print_erro_semantico(no,msg);
+		};
+		
+		std::shared_ptr<Tabela_tipos_item> tipo_exp = analisa_exp(it->exp);
+		
+		if(got->second != tipo_exp){
+			std::string msg = "O campo "+it->id+" é do tipo "+got->second->nome+
+				"e está recebendo um valor do tipo "+tipo_exp->nome;
+			print_erro_semantico(no,msg);
+		};
+	};
 	return tipo_pai;
 };
 
-
 std::shared_ptr<Tabela_tipos_item> analisa_operacao(T_operacao* no){
 	std::shared_ptr<Tabela_tipos_item> eexp_tipo = analisa_exp(no->eexp);
-
 	std::shared_ptr<Tabela_tipos_item> dexp_tipo = analisa_exp(no->dexp);
-	if (eexp_tipo.compare(dexp_tipo) != 0){
-		std::cout << "Semantic Error: Incompatibilidade de tipos. A expressão à esquerda do operador; "
-		std::cout << no->operador << " é do tipo " << eexp_tipo;
-		std::cout << ", e a expressão à direita é do tipo " << dexp_tipo << std::endl;
-		exit(0);
-	} else {
+	if (eexp_tipo != dexp_tipo){
+		std::string msg = "Incompatibilidade de tipos. A expressão à esquerda do operador; " + no->operador +
+			" é do tipo " + eexp_tipo->nome+ ", e a expressão à direita é do tipo "+dexp_tipo->nome;
+		print_erro_semantico(no,msg);
+	}
+
+	if((eexp_tipo->nome).compare("int") == 0){
+		return eexp_tipo;
+	}
+
+	if(no->operador.compare(">") == 0 or
+		no->operador.compare(">=") == 0 or 
+		no->operador.compare("<") == 0 or 
+		no->operador.compare("<+") == 0 or
+		no->operador.compare("&") == 0 or 
+		no->operador.compare("|") == 0){
+
+		std::string msg = "As expressões usadas com o operador "+no->operador+
+			" devem ser do tipo inteiro, não "+eexp_tipo->nome+"!";
+		print_erro_semantico(no,msg);
+	};
+
+	if(no->operador.compare("+") == 0 or 
+		no->operador.compare("-") == 0 or
+		no->operador.compare("*") == 0 or
+		no->operador.compare("/") == 0){
+
+		if((eexp_tipo->nome).compare("float") == 0){
+			return eexp_tipo;
+		} else {
+			std::string msg = "As expressões usadas com o operador "+no->operador+
+			" devem ser do tipo inteiro ou float, não "+eexp_tipo->nome+"!";
+			print_erro_semantico(no,msg);
+		};
+	};
+
+	if(no->operador.compare("=") == 0 or 
+		no->operador.compare("<>") == 0){
 		return eexp_tipo;
 	};
 };
 
-/*
-void analisa_tyfields(T_tyfields* no){
-	std::vector<std::string> tyfields (no->tyfields);
-	for(std::string id: tyfields){
-		//cada dois ids formam um tyfield - arrumar q tá  feio
-		//o segundo é o tipo que tem que verificar se existe
-	}
-
-};
-
-void analisa_tylist(T_tylist* no){
-	std::vector<std::shared_ptr<T_ty>> tylist (no->tylist);
-	for(std::shared_ptr<T_ty> ty: tylist){
-		//analisa_ty(ty);
-	}
-}
-
-void analisa_it(T_enum_it* no){
-	//verifica id
-	analisa_exp(no->exp);
-};
-
-void analisa_rec_enum(T_rec_enum* no){
-	std::vector<std::shared_ptr<T_enum_it>> rec_enum (no->rec_enum);
-	for(std::shared_ptr<T_enum_it> it: rec_enum){
-		analisa_it(it.get());
-	}
-};
-
-void analisa_exp_list(T_exp_list* no){
-	std::vector<std::shared_ptr<T_exp>> exp_list (no->exp_list);
-	for(std::shared_ptr<T_exp> exp: exp_list){
-		analisa_exp(exp);
-	}
-}
-
-*/
-
 std::shared_ptr<Tabela_tipos_item> analisa_exp(std::shared_ptr<T_exp> no){
 	if (auto no_int = dynamic_cast<typename std::shared_ptr<T_int>::element_type*>(no.get())){
 		std::string tipo = "int";
-		return procura_tipo(tipo,tabela_atual);
+		return procura_tipo(tipo);
 	} else if (auto no_float = dynamic_cast<typename std::shared_ptr<T_float>::element_type*>(no.get())){
 		std::string tipo = "float";
-		return procura_tipo(tipo,tabela_atual);
+		return procura_tipo(tipo);
 	} else if (auto no_string = dynamic_cast<typename std::shared_ptr<T_string>::element_type*>(no.get())){
 		std::string tipo = "string";
-		return procura_tipo(tipo,tabela_atual);
+		return procura_tipo(tipo);
 	} else if (auto no_nil = dynamic_cast<typename std::shared_ptr<T_nil>::element_type*>(no.get())){
 		std::string tipo = "nil";
-		return procura_tipo(tipo,tabela_atual);
+		return procura_tipo(tipo);
 	} else if (auto no_lvalue = dynamic_cast<typename std::shared_ptr<T_lvalue>::element_type*>(no.get())){
 		return analisa_lvalue(no_lvalue);
 	} else if (auto no_exp_seq = dynamic_cast<typename std::shared_ptr<T_exp_seq>::element_type*>(no.get())){

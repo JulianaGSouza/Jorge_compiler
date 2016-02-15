@@ -1,6 +1,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 
 using namespace std;
 
@@ -79,11 +80,11 @@ public:
 
 class T_tyfields: public T_no {
 public:
-	std::vector<std::string> tyfields;
+	std::unordered_map<std::string,std::string> tyfields;
 
-	void add(std::string id1, std::string id2){
-		tyfields.push_back(id1);
-		tyfields.push_back(id2);
+	void add(std::string id, std::string tipo){
+		std::pair<std::string,std::string> par (id,tipo);
+		tyfields.insert(par);
 	}
 };
 
