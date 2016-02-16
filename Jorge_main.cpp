@@ -7,10 +7,9 @@
 using namespace std;
 
 #include "Jorge_t_define.h"
-
 #include "Jorge_parser.tab.h"
-
-//#include "Jorge_asemantic.h"
+#include "Jorge_asemantic.h"
+#include "Jorge_print_arvore.h"
 
 int main (void){
 	std::unique_ptr<T_exp> raiz;

@@ -23,6 +23,7 @@ virtual ~T_no() {}
 class T_exp : public T_no{
 public:
 	virtual ~T_exp() {}
+	//virtual Value *codegen() = 0;
 };
 
 class T_int : public T_exp {
@@ -30,6 +31,7 @@ public:
 	int n;
 
 	T_int(int n) : n(n){}
+	//Value *codegen() override;
 };
 
 class T_float : public T_exp {
@@ -37,13 +39,14 @@ public:
 	float n;
 
 	T_float(float n) : n(n){}
+	//Value *codegen() override;
 };
 
 class T_string : public T_exp {
 public:
 	std::string cadeia;
 
-	 T_string (const std::string &cadeia) : cadeia(cadeia) {}
+	T_string (const std::string &cadeia) : cadeia(cadeia) {}
 };
 
 class T_nil : public T_exp{
@@ -177,6 +180,8 @@ public:
 
 	T_operacao(const std::string operador, std::shared_ptr<T_exp> expe, std::shared_ptr<T_exp> expd)
 	: operador(operador), eexp(std::move(expe)), dexp(std::move(dexp)) {}
+	
+	//Value *codegen() override;
 };
 
 class T_exp_list : public T_no{
