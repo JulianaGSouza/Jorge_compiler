@@ -9,3 +9,32 @@
    3. Imprima a lista ordenada
 
 */
+let
+    type = {head:int, tail:int}
+    function quick_sort(a) =
+    let
+        function concat(a:list,b:list) =
+            if a == nil
+            then b
+            else list{head=a.head,
+                      tail = concat(a.tail, b)}
+                    
+        function maiores(a:list, int p) = 
+            if a.head > p 
+            then list{head=a.head, tail=maiores(a.tail)}
+            else maiores(a.tail)
+            
+        function menores(a:list, int p) = 
+            if a.head <= p 
+            then list{head=a.head, tail=menores(a.tail)}
+            else menores(a.tail)
+        
+        p = a.head
+        llist = quick_sort(maiores(a,p))
+        hlist = quick_sort(menores(a,p))
+    in
+        concat(llist,list{head=p, tail=hlist})
+    end
+in
+    quick_sort(a)
+end
