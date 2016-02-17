@@ -94,8 +94,7 @@ int yylex();
 
 %%
 
-inicio :	exp 			{raiz = std::shared_ptr<T_exp>(new T_exp()); 
-					raiz->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+inicio :	exp 			{raiz->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 
 //declaracoes
 declist:	dec			{ $$ = new T_declist(); $$->add(std::shared_ptr<T_dec>($1));

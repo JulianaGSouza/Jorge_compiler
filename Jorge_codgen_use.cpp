@@ -111,6 +111,33 @@ Value *T_chamada::codegen() {
   return Builder.CreateCall(Chamada, ArgsV, "chamadatmp");
 }
 
+Value *T_ty_rec::codegen(){
+	StructType* struct_tyfields = StructType::create(TheModule->getContext(), "struct.fields");
+	for(auto it = tyfields->tyfields.begin(); it != tyfields->tyfields.end() ; it++){
+		StructTy_struct_tyfield_fields.push_back(TygetPrimitiveType(TheModule->getContext(),it->second));
+	};
+}
+
+Value *T_tydec::codegen(){
+	//TYPE ID IGUAL ty
+
+	if (auto ty_id = dynamic_cast<typename std::shared_ptr<T_ty_id>::element_type*>(ty.get())){
+		//T_ty_id::codegen();
+	} else if (auto ty_rec = dynamic_cast<typename std::shared_ptr<T_ty_rec>::element_type*>(ty.get())){
+		T_ty_rec::codegen();
+	} else if (auto ty_array = dynamic_cast<typename std::shared_ptr<T_ty_array>::element_type*>(ty.get())){
+		//T_ty_array::codegen();
+	} if (auto ty_funfun = dynamic_cast<typename std::shared_ptr<T_ty_funfun>::element_type*>(ty.get())){
+		//T_ty_funfun::codegen();
+	};
+}
+
 int main(void){
 	return 0;
 };
+
+struct {
+	std::string nome;
+	int idade;
+	float rendimento;
+} pessoa;

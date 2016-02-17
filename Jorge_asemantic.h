@@ -327,8 +327,8 @@ void analisa_tydec(T_tydec* no){
 	};
 
 	std::shared_ptr<Tabela_tipos_item> novo_tipo (new Tabela_tipos_item(no->id));
-	analisa_ty(no->ty,novo_tipo);
 	tabela_atual->inserir_tipo(novo_tipo);
+	analisa_ty(no->ty,novo_tipo);
 };
 
 void analisa_vardec(T_vardec* no){

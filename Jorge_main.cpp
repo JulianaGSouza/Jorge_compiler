@@ -12,8 +12,8 @@ using namespace std;
 #include "Jorge_print_arvore.h"
 
 int main (void){
-	std::unique_ptr<T_exp> raiz;
-	yyparse (std::move(raiz));
+	std::shared_ptr<T_exp> raiz(std::shared_ptr<T_exp> (new T_exp()));
+	yyparse (raiz);
 	//semantico(std::move(raiz));
 	//gerar codigo llvm
 	//print no llvm::module

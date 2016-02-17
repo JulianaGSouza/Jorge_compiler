@@ -1,3 +1,7 @@
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -81,6 +85,7 @@ public:
 	std::shared_ptr<T_ty> ty;
 
 	T_tydec(const std::string &id, std::shared_ptr<T_ty> ty) : id(id), ty(std::move(ty)) {}
+	Value *codegen() override;
 };
 
 class T_tyfields: public T_no {
@@ -105,6 +110,8 @@ public:
 	std::shared_ptr<T_tyfields> tyfields;
 
 	T_ty_rec(std::shared_ptr<T_tyfields> tyfields) : tyfields(std::move(tyfields)) {}
+
+	Value *codegen() override;
 };
 
 class T_ty_array : public T_ty{
@@ -207,7 +214,7 @@ public:
 	/*T_chamada(std::shared_ptr<T_exp> exp, std::shared_ptr<T_exp_list> exp_list)
 	: exp(std::move(exp)), id(id), exp_list(std::move(exp_list)) {}*/
 
-	Value *codegen() override;
+	//Value *codegen() override;
 };
 
 class T_exp_seq : public T_exp { 
