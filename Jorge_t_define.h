@@ -1,9 +1,10 @@
 #include <memory>
 #include <vector>
 #include <iostream>
-#include <unordered_map>
+#include <map>
 
 using namespace std;
+using namespace llvm;
 
 class T_no{
 public:
@@ -18,12 +19,13 @@ virtual ~T_no() {}
 		this->coluna = coluna;
 		this->linha_codigo = linha_codigo;
 	}
+
+	virtual Value *codegen() = 0;
 };
 
 class T_exp : public T_no{
 public:
 	virtual ~T_exp() {}
-	//virtual Value *codegen() = 0;
 };
 
 class T_int : public T_exp {
@@ -31,7 +33,7 @@ public:
 	int n;
 
 	T_int(int n) : n(n){}
-	//Value *codegen() override;
+	Value *codegen() override;
 };
 
 class T_float : public T_exp {
@@ -39,7 +41,7 @@ public:
 	float n;
 
 	T_float(float n) : n(n){}
-	//Value *codegen() override;
+	Value *codegen() override;
 };
 
 class T_string : public T_exp {
@@ -83,7 +85,7 @@ public:
 
 class T_tyfields: public T_no {
 public:
-	std::unordered_map<std::string,std::string> tyfields;
+	std::map<std::string,std::string> tyfields;
 
 	void add(std::string id, std::string tipo){
 		std::pair<std::string,std::string> par (id,tipo);
@@ -181,7 +183,7 @@ public:
 	T_operacao(const std::string operador, std::shared_ptr<T_exp> expe, std::shared_ptr<T_exp> expd)
 	: operador(operador), eexp(std::move(expe)), dexp(std::move(dexp)) {}
 	
-	//Value *codegen() override;
+	Value *codegen() override;
 };
 
 class T_exp_list : public T_no{
@@ -204,6 +206,8 @@ public:
 
 	/*T_chamada(std::shared_ptr<T_exp> exp, std::shared_ptr<T_exp_list> exp_list)
 	: exp(std::move(exp)), id(id), exp_list(std::move(exp_list)) {}*/
+
+	Value *codegen() override;
 };
 
 class T_exp_seq : public T_exp { 
@@ -256,6 +260,7 @@ public:
 	std::shared_ptr<T_exp> exp;
 
 	T_subunario(std::shared_ptr<T_exp> exp) : exp(std::move(exp)) {}
+	Value *codegen() override;	
 };
 
 class T_if : public T_exp {

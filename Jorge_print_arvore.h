@@ -37,8 +37,7 @@ std::string print_if(T_if* no){
 
 std::string print_ty_rec(T_ty_rec* no){
 	std::string lista;
-	for (std::unordered_map<std::string,std::string>::iterator 
-		it = (no->tyfields->tyfields).begin(); 
+	for (auto it = (no->tyfields->tyfields).begin(); 
 		it != (no->tyfields->tyfields).end(); ++it){ 
 
 		lista+= it->first +":"+it->second+", ";
@@ -90,8 +89,7 @@ std::string print_fundec(T_fundec* no){
 	else tipo = " : "+no->tipo+" ";
 	
 	std::string lista = "";
-	for (std::unordered_map<std::string,std::string>::iterator 
-		it = (no->tyfields->tyfields).begin(); 
+	for (auto it = (no->tyfields->tyfields).begin(); 
 		it != (no->tyfields->tyfields).end(); ++it){ 
 		
 		lista += it->first + ":"+ it->second + ", "; 

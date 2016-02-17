@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 using namespace std;
 
@@ -14,7 +14,7 @@ public:
 	enum_tipo_list tipo;
 	std::string nome;
 	std::shared_ptr<Tabela_tipos_item> tipo_relacionado;
-	std::unordered_map<std::string,std::shared_ptr<Tabela_tipos_item>> enum_rec;
+	std::map<std::string,std::shared_ptr<Tabela_tipos_item>> enum_rec;
 	std::vector<std::shared_ptr<Tabela_tipos_item>> lista_tipos_fun;
 	
 	Tabela_tipos_item() {}
@@ -46,8 +46,8 @@ public:
 
 class Tabela_simbolos {
 public:
-	std::unordered_map<std::string, std::shared_ptr<Tabela_tipos_item>> tabela_tipos;
-	std::unordered_map<std::string, std::shared_ptr<Tabela_var_fun_item>> tabela_var_fun;
+	std::map<std::string, std::shared_ptr<Tabela_tipos_item>> tabela_tipos;
+	std::map<std::string, std::shared_ptr<Tabela_var_fun_item>> tabela_var_fun;
 	std::shared_ptr<Tabela_simbolos> pai;
 
 	Tabela_simbolos() {}
@@ -65,7 +65,7 @@ public:
 	}
 
 	std::shared_ptr<Tabela_tipos_item> procura_tipo_no_escopo(std::string &nome){
-		std::unordered_map<std::string, std::shared_ptr<Tabela_tipos_item>>::const_iterator got = tabela_tipos.find(nome);
+		auto got = tabela_tipos.find(nome);
 		if (got == tabela_tipos.end()) {
 			return NULL;
 		}else{
@@ -74,7 +74,7 @@ public:
 	}
 
 	std::shared_ptr<Tabela_var_fun_item> procura_var_fun_no_escopo(std::string &nome){
-		std::unordered_map<std::string, std::shared_ptr<Tabela_var_fun_item>>::const_iterator got = tabela_var_fun.find(nome);
+		auto got = tabela_var_fun.find(nome);
 		if (got == tabela_var_fun.end()) {
 			return NULL;
 		}else{
@@ -183,9 +183,9 @@ std::shared_ptr<Tabela_tipos_item> analisa_lvalue_rec(T_lvalue* no){
 		print_erro_semantico(no, msg);
 	};		
 
-	std::unordered_map<std::string,std::shared_ptr<Tabela_tipos_item>> tyfields = tipo_lvalue->enum_rec;
+	auto tyfields = tipo_lvalue->enum_rec;
 
-	std::unordered_map<std::string, std::shared_ptr<Tabela_tipos_item>>::const_iterator got = tyfields.find(no->id);
+	auto got = tyfields.find(no->id);
 	if (got == tyfields.end()) {
 		std::string msg = "O campo "+no->id+" não pertence ao record";
 		print_erro_semantico(no,msg);
@@ -269,8 +269,7 @@ void analisa_ty_id(T_ty_id* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
 void analisa_ty_rec(T_ty_rec* no, std::shared_ptr<Tabela_tipos_item> novo_tipo){
 	novo_tipo->tipo = enum_tipo_list::rec;
 
-	for (std::unordered_map<std::string,std::string>::iterator 
-		it = (no->tyfields->tyfields).begin(); 
+	for (auto it = (no->tyfields->tyfields).begin(); 
 		it != (no->tyfields->tyfields).end(); ++it){ 
 
 		std::string tipo_item_name = it->second;
@@ -386,8 +385,7 @@ void insere_tipo_retorno_fun(T_fundec* no, std::shared_ptr<Tabela_var_fun_item> 
 };
 
 void insere_parametros_fun(T_fundec* no, std::shared_ptr<Tabela_var_fun_item> nova_fun){
-	for (std::unordered_map<std::string,std::string>::iterator 
-		it = (no->tyfields->tyfields).begin(); 
+	for (auto it = (no->tyfields->tyfields).begin(); 
 		it != (no->tyfields->tyfields).end(); ++it){ 
 
 		std::string tipo_item_name = it->second;
@@ -480,7 +478,7 @@ std::shared_ptr<Tabela_tipos_item> analisa_def_rec(T_def_rec* no){
 	};
 
 	for(std::shared_ptr<T_enum_it> it : no->rec_enum->rec_enum){
-		std::unordered_map<std::string, std::shared_ptr<Tabela_tipos_item>>::const_iterator got = tipo_relacionado->enum_rec.find(it->id);
+		auto got = tipo_relacionado->enum_rec.find(it->id);
 		if (got == tipo_relacionado->enum_rec.end()) {
 			std::string msg = "O campo "+it->id+" não pertence ao record";
 			print_erro_semantico(no,msg);
