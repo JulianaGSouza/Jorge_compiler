@@ -1,6 +1,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <memory>
+#include <vector>
+#include <map>
+#include <typeinfo>
 
 /*function print(s : string)
 Print s on standard output.*/
@@ -21,14 +28,18 @@ std::string t_getChar(){
     if (c == EOF){
         return "";
     } else {
-        return c;
+        std::stringstream ss;
+        std::string s;
+        ss << c;
+        ss >> s;
+        return s;
     }
 }
 
 /*function ord(s: string) : int
 Give ASCII value of first character of s ; yields -1 if s is empty string.*/
 int t_ord(std::string s){
-    if (std::strcmp (s, "") == 0) {
+    if (s.compare("") == 0) {
         return -1;
     } else {
         return int(s[0]);
@@ -40,7 +51,11 @@ Single-character string from ASCII value i ; halt program if i out of range.*/
 std::string t_chr(int i){
     if (isascii(i)) {
       char a = i;
-      return a;
+      std::stringstream ss;
+      std::string s;
+      ss << a;
+      ss >> s;
+      return s;
     }
     else
       return(0);
