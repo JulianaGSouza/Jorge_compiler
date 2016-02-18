@@ -17,32 +17,33 @@ void t_flush(){
 /*function getchar() : string
 Read a character from standard input; return empty string on end of file.*/
 std::string t_getChar(){
-    std::string letra;
-	std::getline(std::cin, letra);
-    if (letra == ""){
-        return " ";
+    char c = getchar();
+    if (c == EOF){
+        return "";
     } else {
-        return letra;
+        return c;
     }
 }
 
 /*function ord(s: string) : int
 Give ASCII value of first character of s ; yields -1 if s is empty string.*/
 int t_ord(std::string s){
-    /*if (std::strcmp (s, " ") == 0) {
+    if (std::strcmp (s, "") == 0) {
         return -1;
     } else {
-        return ("%i",("%d",s[0]));
-    }*/
+        return int(s[0]);
+    }
 }
 
 /*function chr(i: int) : string
 Single-character string from ASCII value i ; halt program if i out of range.*/
 std::string t_chr(int i){
-/*    if (isascii(i))
-      return ("%c",i);
+    if (isascii(i)) {
+      char a = i;
+      return a;
+    }
     else
-      return(0);*/
+      return(0);
 }
 
 /*function size(s: string) : int
