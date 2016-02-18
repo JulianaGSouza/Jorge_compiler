@@ -10,11 +10,13 @@ using namespace std;
 #include "Jorge_parser.tab.h"
 #include "Jorge_asemantic.h"
 #include "Jorge_print_arvore.h"
+#include "Jorge_codgen_use.h"
 
 int main (void){
 	std::shared_ptr<T_exp> raiz(std::shared_ptr<T_exp> (new T_exp()));
 	yyparse (raiz);
-	//semantico(std::move(raiz));
+	semantico(raiz);
+	//print_arvore(raiz);
 	//gerar codigo llvm
 	//print no llvm::module
 }

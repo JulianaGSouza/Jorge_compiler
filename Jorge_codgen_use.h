@@ -4,8 +4,6 @@
 #include "llvm/IR/Module.h"
 //#include "llvm/IR/Verifier.h"
 
-#include "Jorge_t_define.h"
-
 using namespace llvm;
 
 static std::unique_ptr<Module> TheModule;
@@ -29,9 +27,9 @@ Value *T_float::codegen() {
 	return ConstantFP::get(getGlobalContext(), APFloat(n));
 }
 
-/*Value *T_string::codegen() {
+Value *T_string::codegen() {
 	//return ConstantFP::get(getGlobalContext(), APString(cadeia));
-}*/
+}
 
 
 /*
@@ -109,14 +107,16 @@ Value *T_chamada::codegen() {
   }
 
   return Builder.CreateCall(Chamada, ArgsV, "chamadatmp");
-}
+};
 
 Value *T_ty_rec::codegen(){
 	StructType* struct_tyfields = StructType::create(TheModule->getContext(), "struct.fields");
+	std::vector<Type*> struct_tyfields_fields;
 	for(auto it = tyfields->tyfields.begin(); it != tyfields->tyfields.end() ; it++){
-		StructTy_struct_tyfield_fields.push_back(TygetPrimitiveType(TheModule->getContext(),it->second));
+		//struct_tyfields_fields.push_back(Type::TygetPrimitiveType(TheModule->getContext(),it->second));
 	};
-}
+	//struct_tyfields->setBody(struct_tyfields_fields.push_back);
+};
 
 Value *T_tydec::codegen(){
 	//TYPE ID IGUAL ty
@@ -124,20 +124,66 @@ Value *T_tydec::codegen(){
 	if (auto ty_id = dynamic_cast<typename std::shared_ptr<T_ty_id>::element_type*>(ty.get())){
 		//T_ty_id::codegen();
 	} else if (auto ty_rec = dynamic_cast<typename std::shared_ptr<T_ty_rec>::element_type*>(ty.get())){
-		T_ty_rec::codegen();
+		//T_ty_rec::codegen();
 	} else if (auto ty_array = dynamic_cast<typename std::shared_ptr<T_ty_array>::element_type*>(ty.get())){
 		//T_ty_array::codegen();
 	} if (auto ty_funfun = dynamic_cast<typename std::shared_ptr<T_ty_funfun>::element_type*>(ty.get())){
 		//T_ty_funfun::codegen();
 	};
-}
-
-int main(void){
-	return 0;
 };
 
-struct {
-	std::string nome;
-	int idade;
-	float rendimento;
-} pessoa;
+
+Value *T_nil::codegen(){
+};
+
+Value *T_declist::codegen(){
+};
+
+Value *T_tyfields::codegen(){
+};
+
+Value *T_ty_id::codegen(){
+};
+
+Value *T_ty_array::codegen(){
+};
+
+Value *T_tylist::codegen(){
+};
+
+Value *T_ty_funfun::codegen(){
+};
+
+Value *T_vardec::codegen(){
+};
+
+Value *T_fundec::codegen(){
+};
+
+Value *T_lvalue::codegen(){
+};
+
+Value *T_exp_list::codegen(){
+};
+
+Value *T_exp_seq::codegen(){ 
+};
+
+Value *T_enum_it::codegen(){
+};
+
+Value *T_rec_enum::codegen(){	
+};
+
+Value *T_def_rec::codegen(){
+};
+
+Value *T_def_array::codegen(){
+};
+
+Value *T_if::codegen(){
+};
+
+Value *T_let::codegen(){
+};
+
