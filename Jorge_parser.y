@@ -31,9 +31,9 @@ int yylex();
 %union{
 	char* i_id;
 	T_exp* i_exp;
-	T_int* i_int;
-	T_float* i_float;
-	T_string* i_string;
+	int i_int;
+	float i_float;
+	char* i_string;
 	T_nil* i_nil;
 	T_declist* i_declist;
 	T_dec* i_dec;
@@ -65,7 +65,7 @@ int yylex();
 %type<i_ty> ty ty_id ty_rec ty_array ty_funfun
 %type<i_tyfields> tyfields
 %type<i_tylist> tylist
-%type<i_lvalue> lvalue
+%type<i_lvalue> lvalue lvalue_array
 %type<i_operacao> op_arit op_bool op_comp
 %type<i_exp_list> exp_list
 %type<i_chamada> chamada
@@ -89,6 +89,8 @@ int yylex();
 %precedence ARRAY_PREC
 %precedence IF_PREC
 %precedence ELSE
+%precedence '['
+%precedence LVALUE_PREC
 
 %start inicio
 
@@ -102,9 +104,9 @@ declist:	dec			{ $$ = new T_declist(); $$->add(std::shared_ptr<T_dec>($1));
 		|dec declist		{ $2->add(std::shared_ptr<T_dec>($1)); $$ = $2;}
 ;
 
-dec:		tydec
-		| vardec
-		| fundec
+dec:		tydec			{$$ = $1;}
+		| vardec		{$$ = $1;}
+		| fundec		{$$ = $1;}
 ;
 
 //tipos
@@ -118,10 +120,10 @@ tylist:		%empty			{ $$ = new T_tylist();
 		|ty ',' tylist		{ $3->add(std::shared_ptr<T_ty>($1)); $$ = $3;}
 ;
 
-ty:		ty_id
-		| ty_rec
-		| ty_array
-		| ty_funfun
+ty:		ty_id			{$$ = $1;}
+		| ty_rec		{$$ = $1;}
+		| ty_array		{$$ = $1;}
+		| ty_funfun		{$$ = $1;}
 ;
 
 ty_id:		ID				{ $$ = new T_ty_id(std::string($1));
@@ -172,8 +174,15 @@ lvalue:		ID				{ $$ = new T_lvalue(std::string($1));
 							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| lvalue PONTO ID		{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>($1), std::string($3));
 							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
-		| lvalue '[' exp ']'		{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>($1), std::shared_ptr<T_exp>($3));
+		| lvalue_array			{$$ = $1;}
+;
+
+lvalue_array:	lvalue '[' exp ']' 			{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>($1), std::shared_ptr<T_exp>($3));
 							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| ID '[' exp ']' %prec LVALUE_PREC	{ $$ = new T_lvalue(std::shared_ptr<T_lvalue>(new T_lvalue($1)), 
+										std::shared_ptr<T_exp>($3));
+							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+
 ;
 
 //Expressoes
@@ -264,23 +273,23 @@ exp_let:	LET declist IN exp_seq END	{ $$ = new T_let(std::shared_ptr<T_declist>(
 							$$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 ;
 
-exp:		lvalue
+exp:		lvalue				{$$ = $1;}
 		| NIL				{$$ = new T_nil(); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
 		| '(' exp_seq ')'		{$$ = $2;}
-		| INT 				{$$ = new T_int(*$1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
-		| FLOAT 			{$$ = new T_float(*$1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
-		| STRING			{$$ = new T_string(*$1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
-		| subunario
-		| chamada
-		| op_arit			
-		| op_bool			
-		| op_comp			
-		| def_array
-		| def_rec
-		| exp_if_else 
-		| exp_if	
-		| exp_let
-    | error { $$ = new T_nil(); }
+		| INT 				{$$ = new T_int($1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| FLOAT 			{$$ = new T_float($1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| STRING			{$$ = new T_string($1); $$->set_localizacao(yyline,yycolumn,bf_linha_scanner);}
+		| subunario 			{$$ = $1;}
+		| chamada			{$$ = $1;}
+		| op_arit			{$$ = $1;}
+		| op_bool			{$$ = $1;}
+		| op_comp			{$$ = $1;}
+		| def_array			{$$ = $1;}
+		| def_rec			{$$ = $1;}
+		| exp_if_else 			{$$ = $1;}
+		| exp_if			{$$ = $1;}
+		| exp_let			{$$ = $1;}
+		| error 			{ $$ = new T_nil(); }
 ;
 
 %%

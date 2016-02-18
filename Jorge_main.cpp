@@ -13,7 +13,7 @@ using namespace std;
 #include "Jorge_codgen_use.h"
 
 int main (void){
-	std::shared_ptr<T_exp> raiz(std::shared_ptr<T_exp> (new T_exp()));
+	std::shared_ptr<T_exp> raiz;
 	yyparse (raiz);
 	semantico(raiz);
 	//print_arvore(raiz);

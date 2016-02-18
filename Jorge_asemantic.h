@@ -110,8 +110,17 @@ std::shared_ptr<Tabela_var_fun_item> procura_var_fun(std::string &nome, shared_p
 };
 
 void print_erro_semantico(T_no* no, std::string msg){
-	std::cout << "Semantic Error: (Linha " << no->linha << ", Coluna " << no->coluna <<") : ";
-	std::cout << no->linha_codigo << "\n" << msg << std::endl;
+
+	std::cerr << "\033[1;37m"  << no->linha << ":" << no->coluna << ":\033[1;31m Erro:" 
+            << "\033[1;0m "<< msg << " at:" << std::endl;
+	std::cerr << no->linha_codigo << std::endl;
+	for (int i = 0; i < no->coluna; i++) 
+		std::cerr << " ";
+	std::cerr << "\033[1;31m^\033[1;0m" << std::endl;
+
+
+	//std::cout << "Semantic Error: (Linha " << no->linha << ", Coluna " << no->coluna <<") : ";
+	//std::cout << no->linha_codigo << "\n" << msg << std::endl;
 	exit(0);
 };
 
